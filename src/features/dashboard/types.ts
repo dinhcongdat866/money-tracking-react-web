@@ -30,3 +30,8 @@ export type Transaction = {
 };
 
 export type TimeRange = 'week' | 'month';
+
+export type Summary = {
+    current: number;
+    previous: number;
+}

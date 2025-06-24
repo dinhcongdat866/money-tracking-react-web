@@ -6,5 +6,6 @@ export function useMostSpentExpenses(timeRange: TimeRange, limit: number = 3) {
   return useQuery({
     queryKey: ["mostSpentExpenses", timeRange, limit],
     queryFn: () => getMostSpentExpenses(timeRange, limit),
+    staleTime: 1000 * 60 * 60 * 1,
   })
 }
