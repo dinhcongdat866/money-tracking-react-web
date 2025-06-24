@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMostSpentExpenses } from "../hooks/use-most-spent-expenses";
-import { TimeRange } from "../types"
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { useMostSpentExpenses } from "../hooks/use-most-spent-expenses";
+import { TimeRange } from "../types";
 
 export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
     const [range, setRange] = useState<TimeRange>("month");
@@ -26,7 +27,7 @@ export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {isLoading && <p>Loading...</p>}
+                {isLoading && <Skeleton className="h-10 w-full" />}
                 {!isLoading && data && data.length > 0 && (
                     <ul className="space-y-2">
                         {data.map((item) => (

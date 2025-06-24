@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "../hooks/use-balance";
 
 export function BalanceCard() {
@@ -13,7 +14,7 @@ export function BalanceCard() {
             </CardHeader>
             <CardContent>
                 {isLoading ? (
-                    <p className="text-muted-foreground">Loading...</p>
+                    <Skeleton className="h-10 w-full" />
                 ) : isError ? (
                     <p className="text-destructive">Error loading balance</p>
                 ) : (
