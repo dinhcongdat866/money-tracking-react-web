@@ -1,6 +1,6 @@
 import { BalanceCard } from "@/features/dashboard/components/balance-card";
 import SummaryCard from "@/features/dashboard/components/summary-card";
-import { MostSpentExpenseCard } from "@/features/dashboard/components/most-spent-expense-card";
+import { MostSpentExpensesCard } from "@/features/dashboard/components/most-spent-expense-card";
 import RecentTransactionsTable from "@/features/dashboard/components/recent-transactions-table";
 
 export default function DashboardPage() {
@@ -11,7 +11,7 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SummaryCard summary={2} />
-                <MostSpentExpenseCard timeRange="month" />
+                <MostSpentExpensesCard limit={3} />
             </div>
 
             <RecentTransactionsTable transactions={1000000} />

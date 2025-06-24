@@ -1,34 +1,51 @@
-"use client";
+"use client"
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useMostSpentExpenses } from "../hooks/use-most-spent-expenses";
-import { TimeRange } from "../types";
+import { TimeRange } from "../types"
 
-export function MostSpentExpenseCard({ timeRange, limit = 3 }: { timeRange: TimeRange, limit?: number }) {
-  const { data, isLoading, isError } = useMostSpentExpenses(timeRange, limit);
+const timeRanges: TimeRange[] = ["week", "month"]
+
+export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
+  const [range, setRange] = useState<TimeRange>("month");
+  const { data, isLoading } = useMostSpentExpenses(range, limit);
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>Top Spending Categories</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {isLoading && <p className="text-muted-foreground text-sm">Loading...</p>}
-        {isError && <p className="text-destructive text-sm">Failed to load data.</p>}
-        {data?.map((item) => (
-          <div key={item.categoryId} className="flex items-center justify-between">
-            <div className="text-sm font-medium">{item.categoryName}</div>
-            <div className="text-sm text-muted-foreground">
-              ${item.expense.toLocaleString()} ({Math.round(item.ratio * 100)}%)
-            </div>
+        <CardTitle className="flex justify-between items-center">
+          Top Expenses
+          <div className="flex gap-2">
+            {timeRanges.map((t) => (
+              <Button
+                key={t}
+                size="sm"
+                variant={t === range ? "default" : "ghost"}
+                onClick={() => setRange(t)}
+              >
+                {t === "week" ? "This Week" : "This Month"}
+              </Button>
+            ))}
           </div>
-        ))}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading && <p>Loading...</p>}
+        {!isLoading && data && data.length > 0 && (
+          <ul className="space-y-2">
+            {data.map((item) => (
+              <li key={item.categoryId} className="flex justify-between">
+                <span>{item.categoryName}</span>
+                <span className="text-muted-foreground">
+                  ${item.expense} ({(item.ratio * 100).toFixed(0)}%)
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
-  )
+  );
 }
