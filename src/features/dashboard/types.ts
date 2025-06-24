@@ -28,3 +28,5 @@ export type Transaction = {
     date: string;
     note?: string;
 };
+
+export type TimeRange = 'week' | 'month';
