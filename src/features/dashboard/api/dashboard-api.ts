@@ -1,4 +1,4 @@
-import { Balance, CategoryExpense, Summary, TimeRange } from "../types";
+import { Balance, CategoryExpense, Summary, TimeRange, Transaction } from "../types";
 
 export async function getBalance(): Promise<Balance> {
     const res = await fetch("/api/mock/balance", { cache: "no-store" });
@@ -18,6 +18,14 @@ export async function getSummary(timeRange: TimeRange): Promise<Summary> {
     const res = await fetch(`/api/mock/summary?timeRange=${timeRange}`, { cache: "force-cache" });
     if (!res.ok) {
         throw new Error("Failed to fetch summary");
+    }
+    return res.json();
+}
+
+export async function getRecentTransactions(): Promise<Transaction[]> {
+    const res = await fetch("/api/mock/transactions", { cache: "no-store" });
+    if (!res.ok) {
+        throw new Error("Failed to fetch recent transactions");
     }
     return res.json();
 }

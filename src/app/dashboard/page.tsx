@@ -14,7 +14,7 @@ export default function DashboardPage() {
                 <MostSpentExpensesCard limit={3} />
             </div>
 
-            <RecentTransactionsTable transactions={1000000} />
+            <RecentTransactionsTable />
         </main>
     );
 }

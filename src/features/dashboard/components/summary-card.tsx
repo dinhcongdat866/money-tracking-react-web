@@ -46,16 +46,19 @@ export function SummaryCard() {
 
   return (
     <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">
-          {timeRange === "week" ? "This Week vs Last Week" : "This Month vs Last Month"}
-        </CardTitle>
-        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-          <TabsList>
-            <TabsTrigger value="week">Week</TabsTrigger>
-            <TabsTrigger value="month">Month</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <CardHeader className="space-y-1 pb-2">
+        <p className="text-xs font-medium text-muted-foreground">Summary Card</p>
+        <div className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-semibold">
+            {timeRange === "week" ? "This Week vs Last Week" : "This Month vs Last Month"}
+          </CardTitle>
+          <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+            <TabsList>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </CardHeader>
       <CardContent className="h-[180px]">
         {isLoading ? (

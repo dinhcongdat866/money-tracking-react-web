@@ -13,9 +13,10 @@ export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                    Top Expenses
+            <CardHeader className="space-y-1 pb-2">
+                <p className="text-xs font-medium text-muted-foreground">Most Spent Expenses Card</p>
+                <div className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg font-semibold">Top Expenses</CardTitle>
                     <div className="flex gap-2">
                         <Tabs value={range} onValueChange={(v) => setRange(v as TimeRange)}>
                             <TabsList>
@@ -24,7 +25,7 @@ export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
                             </TabsList>
                         </Tabs>
                     </div>
-                </CardTitle>
+                </div>
             </CardHeader>
             <CardContent>
                 {isLoading && <Skeleton className="h-10 w-full" />}
