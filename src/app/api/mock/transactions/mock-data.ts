@@ -13,7 +13,7 @@ export const MOCK_TRANSACTIONS: TransactionItem[] = [
     amount: 25.5,
     type: "expense",
     category: { id: "1", name: "Food & Drink" },
-    date: "2025-12-02T12:00:00.000Z",
+    date: "2025-12-03T12:00:00.000Z",
     note: "Lunch",
   },
   {
@@ -21,7 +21,7 @@ export const MOCK_TRANSACTIONS: TransactionItem[] = [
     amount: 1200,
     type: "income",
     category: { id: "2", name: "Salary" },
-    date: "2025-12-03T09:00:00.000Z",
+    date: "2025-12-02T09:00:00.000Z",
     note: "Monthly salary",
   },
   {

@@ -27,7 +27,11 @@ export default function RecentTransactionsTable() {
         ) : (
           <div className="divide-y divide-border">
             {data.map((tx) => (
-              <TransactionListItem key={tx.id} transaction={tx} />
+              <TransactionListItem
+                key={tx.id}
+                transaction={tx}
+                showFullDateTime
+              />
             ))}
           </div>
         )}

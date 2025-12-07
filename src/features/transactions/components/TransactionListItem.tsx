@@ -4,10 +4,27 @@ import type { TransactionItem } from "../types";
 
 type TransactionListItemProps = {
   transaction: TransactionItem;
+  showFullDateTime?: boolean;
 };
 
-export function TransactionListItem({ transaction }: TransactionListItemProps) {
+export function TransactionListItem({
+  transaction,
+  showFullDateTime = false,
+}: TransactionListItemProps) {
   const date = new Date(transaction.date);
+
+  const dateTimeDisplay = showFullDateTime
+    ? date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
   return (
     <Link
@@ -19,11 +36,7 @@ export function TransactionListItem({ transaction }: TransactionListItemProps) {
           {transaction.note || transaction.category.name}
         </p>
         <p className="text-xs text-muted-foreground">
-          {transaction.category.name} ·{" "}
-          {date.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {transaction.category.name} · {dateTimeDisplay}
         </p>
       </div>
       <span
