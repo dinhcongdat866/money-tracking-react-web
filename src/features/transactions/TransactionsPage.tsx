@@ -111,7 +111,7 @@ export default function TransactionsPage() {
   const hasData = monthlyTransactions.length > 0;
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6">
+    <div className="flex w-full flex-col gap-6 px-4 py-6">
       <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
 
       <Card>
@@ -134,7 +134,10 @@ export default function TransactionsPage() {
             </p>
           ) : hasData ? (
             <>
-              <MonthlySummaryReport summary={monthlySummary} />
+              <MonthlySummaryReport
+                summary={monthlySummary}
+                transactions={monthlyTransactions}
+              />
               <DailyGroupedTransactions groups={grouped} />
             </>
           ) : (

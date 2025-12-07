@@ -21,7 +21,7 @@ export const MOCK_TRANSACTIONS: TransactionItem[] = [
     amount: 1200,
     type: "income",
     category: { id: "2", name: "Salary" },
-    date: "2025-12-01T09:00:00.000Z",
+    date: "2025-12-03T09:00:00.000Z",
     note: "Monthly salary",
   },
   {
@@ -39,6 +39,14 @@ export const MOCK_TRANSACTIONS: TransactionItem[] = [
     category: { id: "4", name: "Entertainment" },
     date: "2025-11-15T20:00:00.000Z",
     note: "Movies",
+  },
+  {
+    id: "t5",
+    amount: 500,
+    type: "expense",
+    category: { id: "5", name: "Rent" },
+    date: "2025-12-03T09:00:00.000Z",
+    note: "Rent",
   },
 ];
 

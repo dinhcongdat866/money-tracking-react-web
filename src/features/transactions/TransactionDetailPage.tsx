@@ -30,7 +30,7 @@ export function TransactionDetailPage({ id }: TransactionDetailPageProps) {
   const date = new Date(tx.date);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+    <div className="flex w-full flex-col gap-4 px-4 py-6">
       <h1 className="text-2xl font-semibold tracking-tight">
         Transaction Detail
       </h1>
