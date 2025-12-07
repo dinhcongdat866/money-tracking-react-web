@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { MonthSelector } from "./components/MonthSelector";
 import { MonthlySummaryReport } from "./components/MonthlySummaryReport";
 import { DailyGroupedTransactions } from "./components/DailyGroupedTransactions";
+import { AddTransactionModal } from "./components/AddTransactionModal";
 import type { GroupedTransactions, MonthlySummary, TransactionItem } from "./types";
 import { useMonthlyTransactions } from "./hooks/useMonthlyTransactions";
 
@@ -32,6 +35,7 @@ function getRecentMonthKeys(count: number = 3): string[] {
 export default function TransactionsPage() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(now));
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const availableMonths = useMemo(() => getRecentMonthKeys(3), []);
 
@@ -111,8 +115,15 @@ export default function TransactionsPage() {
   const hasData = monthlyTransactions.length > 0;
 
   return (
-    <div className="flex w-full flex-col gap-6 px-4 py-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
+    <>
+      <div className="flex w-full flex-col gap-6 px-4 py-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transaction
+          </Button>
+        </div>
 
       <Card>
         <CardHeader className="space-y-4">
@@ -148,6 +159,12 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
     </div>
+
+    <AddTransactionModal
+      open={isAddModalOpen}
+      onOpenChange={setIsAddModalOpen}
+    />
+    </>
   );
 }
 

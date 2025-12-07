@@ -39,7 +39,7 @@ const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
         aria-hidden="true"
       />
       <div
-        className="relative z-50 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="relative z-50 w-full max-w-2xl max-h-[90vh] overflow-y-auto px-4"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -54,7 +54,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
       <div
         ref={ref}
         className={cn(
-          "bg-card text-card-foreground rounded-xl border shadow-lg p-6",
+          "relative bg-card text-card-foreground rounded-xl border shadow-lg p-6 m-4",
           className
         )}
         {...props}
@@ -71,7 +71,7 @@ const DialogHeader = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col space-y-1.5 mb-4", className)}
+    className={cn("flex flex-col space-y-1.5 mb-4 pr-8", className)}
     {...props}
   />
 );
@@ -96,7 +96,7 @@ const DialogClose = ({
   <Button
     variant="ghost"
     size="icon"
-    className={cn("absolute right-4 top-4", className)}
+    className={cn("absolute right-2 top-2", className)}
     onClick={onClose}
     {...props}
   >

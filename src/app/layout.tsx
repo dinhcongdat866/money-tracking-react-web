@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import QueryProvider from "@/components/QueryProvider";
 import { AppNav } from "@/components/app-nav";
+import { AddTransactionFAB } from "@/components/AddTransactionFAB";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,7 @@ export default function RootLayout({
             <main className="flex-1">
               {children}
             </main>
+            <AddTransactionFAB />
           </div>
         </QueryProvider>
       </body>
