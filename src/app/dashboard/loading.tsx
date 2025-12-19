@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/card-skeleton";
 
 export default function Loading() {
   return (
@@ -23,17 +24,3 @@ export default function Loading() {
     </main>
   );
 }
-
-function CardSkeleton({ lines = 2 }: { lines?: number }) {
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <Skeleton className="mb-3 h-5 w-32" />
-      <div className="space-y-2">
-        {Array.from({ length: lines }).map((_, idx) => (
-          <Skeleton key={idx} className="h-4 w-full" />
-        ))}
-      </div>
-    </div>
-  );
-}
-

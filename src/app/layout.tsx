@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import QueryProvider from "@/components/QueryProvider";
-import { AppNav } from "@/components/app-nav";
+import { AppHeader } from "@/components/AppHeader";
 import { AddTransactionFAB } from "@/components/AddTransactionFAB";
 import "./globals.css";
 
@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <QueryProvider>
           <div className="min-h-screen flex flex-col">
-            <AppNav />
+            <AppHeader />
             <main className="flex-1">
               {children}
             </main>
