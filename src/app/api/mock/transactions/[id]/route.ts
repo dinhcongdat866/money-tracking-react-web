@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { MOCK_TRANSACTIONS } from "../mock-data";
 
 type RouteParams = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export function GET(_req: Request, { params }: RouteParams) {
-  const tx = MOCK_TRANSACTIONS.find((t) => t.id === params.id);
+export async function GET(_req: Request, { params }: RouteParams) {
+  const { id } = await params;
+  const tx = MOCK_TRANSACTIONS.find((t) => t.id === id);
 
   if (!tx) {
     return new NextResponse("Not found", { status: 404 });

@@ -1,11 +1,12 @@
 import { TransactionDetailPage as TransactionDetailPageClient } from "@/features/transactions/TransactionDetailPage";
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export default function Page({ params }: PageProps) {
-  return <TransactionDetailPageClient id={params.id} />;
+export default async function Page({ params }: PageProps) {
+  const { id } = await params;
+  return <TransactionDetailPageClient id={id} />;
 }
 
 
