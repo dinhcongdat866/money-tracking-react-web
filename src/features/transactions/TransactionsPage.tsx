@@ -10,6 +10,7 @@ import { DailyGroupedTransactions } from "./components/DailyGroupedTransactions"
 import { AddTransactionModal } from "./components/AddTransactionModal";
 import type { GroupedTransactions, MonthlySummary, TransactionItem } from "./types";
 import { useMonthlyTransactions } from "./hooks/useMonthlyTransactions";
+import { useDeleteTransaction } from "./hooks/useDeleteTransaction";
 
 function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -36,8 +37,33 @@ export default function TransactionsPage() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(now));
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
+  const deleteMutation = useDeleteTransaction();
 
   const availableMonths = useMemo(() => getRecentMonthKeys(3), []);
+
+  const handleEdit = (transaction: TransactionItem) => {
+    setEditingTransaction(transaction);
+    setIsAddModalOpen(true);
+  };
+
+  const handleDelete = async (transaction: TransactionItem) => {
+    if (confirm(`Are you sure you want to delete this transaction?`)) {
+      try {
+        await deleteMutation.mutateAsync(transaction.id);
+      } catch (error) {
+        // Error is handled by mutation hook
+        console.error("Failed to delete transaction:", error);
+      }
+    }
+  };
+
+  const handleModalClose = (open: boolean) => {
+    setIsAddModalOpen(open);
+    if (!open) {
+      setEditingTransaction(null);
+    }
+  };
 
   const { data: monthlyTransactions = [], isLoading, isError } =
     useMonthlyTransactions(selectedMonth);
@@ -149,7 +175,11 @@ export default function TransactionsPage() {
                 summary={monthlySummary}
                 transactions={monthlyTransactions}
               />
-              <DailyGroupedTransactions groups={grouped} />
+              <DailyGroupedTransactions
+                groups={grouped}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -162,7 +192,8 @@ export default function TransactionsPage() {
 
     <AddTransactionModal
       open={isAddModalOpen}
-      onOpenChange={setIsAddModalOpen}
+      onOpenChange={handleModalClose}
+      transaction={editingTransaction}
     />
     </>
   );

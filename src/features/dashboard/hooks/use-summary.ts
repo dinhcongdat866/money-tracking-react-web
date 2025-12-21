@@ -6,6 +6,6 @@ export function useSummary(timeRange: TimeRange) {
   return useQuery({
     queryKey: ["summary", timeRange],
     queryFn: () => getSummary(timeRange),
-    staleTime: 1000 * 60 * 60 * 1,
+    staleTime: 0, // Financial data: always refetch from server
   });
 }

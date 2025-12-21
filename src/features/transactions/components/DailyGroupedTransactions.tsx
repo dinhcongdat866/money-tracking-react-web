@@ -1,13 +1,16 @@
-
-import type { GroupedTransactions } from "../types";
+import type { GroupedTransactions, TransactionItem } from "../types";
 import { TransactionListItem } from "./TransactionListItem";
 
 type DailyGroupedTransactionsProps = {
   groups: GroupedTransactions;
+  onEdit?: (transaction: TransactionItem) => void;
+  onDelete?: (transaction: TransactionItem) => void;
 };
 
 export function DailyGroupedTransactions({
   groups,
+  onEdit,
+  onDelete,
 }: DailyGroupedTransactionsProps) {
   if (!groups || groups.length === 0) {
     return (
@@ -49,7 +52,12 @@ export function DailyGroupedTransactions({
             </div>
             <div className="divide-y divide-border">
               {group.transactions.map((tx) => (
-                <TransactionListItem key={tx.id} transaction={tx} />
+                <TransactionListItem
+                  key={tx.id}
+                  transaction={tx}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
               ))}
             </div>
           </div>

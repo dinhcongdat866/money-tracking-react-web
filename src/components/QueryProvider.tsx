@@ -9,10 +9,11 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
             new QueryClient({
                 defaultOptions: {
                     queries: {
-                        staleTime: 1000 * 60 * 5, // 5 minutes
-                        gcTime: 1000 * 60 * 10, // 10 minutes
-                        refetchOnWindowFocus: false,
-                        refetchOnReconnect: false,
+                        // Financial data: always refetch from server, no caching
+                        staleTime: 0, // Always consider data stale, refetch immediately
+                        gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes for navigation
+                        refetchOnWindowFocus: true, // Refetch when user returns to tab
+                        refetchOnReconnect: true, // Refetch when network reconnects
                         retry: 1,
                         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
                     },

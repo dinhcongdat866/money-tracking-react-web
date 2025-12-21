@@ -7,7 +7,8 @@ export function getMonthKey(date: Date) {
   )}`;
 }
 
-export const MOCK_TRANSACTIONS: TransactionItem[] = [
+// In-memory storage for transactions
+let MOCK_TRANSACTIONS: TransactionItem[] = [
   {
     id: "t1",
     amount: 25.5,
@@ -49,5 +50,48 @@ export const MOCK_TRANSACTIONS: TransactionItem[] = [
     note: "Rent",
   },
 ];
+
+// Helper functions to manipulate transactions
+export function getAllTransactions(): TransactionItem[] {
+  return [...MOCK_TRANSACTIONS];
+}
+
+export function getTransactionById(id: string): TransactionItem | undefined {
+  return MOCK_TRANSACTIONS.find((t) => t.id === id);
+}
+
+export function addTransaction(transaction: Omit<TransactionItem, "id">): TransactionItem {
+  const newTransaction: TransactionItem = {
+    ...transaction,
+    id: `t${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  };
+  MOCK_TRANSACTIONS.push(newTransaction);
+  return newTransaction;
+}
+
+export function updateTransaction(id: string, updates: Partial<Omit<TransactionItem, "id">>): TransactionItem | null {
+  const index = MOCK_TRANSACTIONS.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return null;
+  }
+  MOCK_TRANSACTIONS[index] = {
+    ...MOCK_TRANSACTIONS[index],
+    ...updates,
+    id, // Ensure id doesn't change
+  };
+  return MOCK_TRANSACTIONS[index];
+}
+
+export function deleteTransaction(id: string): boolean {
+  const index = MOCK_TRANSACTIONS.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return false;
+  }
+  MOCK_TRANSACTIONS.splice(index, 1);
+  return true;
+}
+
+// Export for backward compatibility
+export { MOCK_TRANSACTIONS };
 
 

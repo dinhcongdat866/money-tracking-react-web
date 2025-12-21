@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,16 +14,26 @@ import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { CategorySelection } from "./CategorySelection";
 import type { Category } from "../data/categories";
+import type { TransactionItem } from "../types";
+import { useCreateTransaction } from "../hooks/useCreateTransaction";
+import { useUpdateTransaction } from "../hooks/useUpdateTransaction";
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "../data/categories";
 
 type AddTransactionModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transaction?: TransactionItem | null;
 };
 
 export function AddTransactionModal({
   open,
   onOpenChange,
+  transaction,
 }: AddTransactionModalProps) {
+  const isEditMode = !!transaction;
+  const createMutation = useCreateTransaction();
+  const updateMutation = useUpdateTransaction();
+
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
@@ -31,6 +41,33 @@ export function AddTransactionModal({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  // Pre-fill form when transaction is provided (edit mode)
+  useEffect(() => {
+    if (transaction && open) {
+      setType(transaction.type);
+      setAmount(transaction.amount.toString());
+      setNote(transaction.note || "");
+      setSelectedDate(new Date(transaction.date));
+      
+      // Find category from the transaction
+      const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+      const foundCategory = allCategories.find(
+        (cat) => cat.id === transaction.category.id
+      );
+      setCategory(foundCategory || {
+        id: transaction.category.id,
+        name: transaction.category.name,
+      });
+    } else if (!transaction && open) {
+      // Reset form for add mode
+      setType("expense");
+      setAmount("");
+      setCategory(null);
+      setNote("");
+      setSelectedDate(new Date());
+    }
+  }, [transaction, open]);
 
   const formattedDate = useMemo(() => {
     return selectedDate.toLocaleDateString("en-US", {
@@ -62,23 +99,19 @@ export function AddTransactionModal({
     };
 
     try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(transactionData),
-      });
-
-      if (response.ok) {
-        // Reset form
-        setAmount("");
-        setCategory(null);
-        setNote("");
-        setSelectedDate(new Date());
-        onOpenChange(false);
+      if (isEditMode && transaction) {
+        await updateMutation.mutateAsync({
+          id: transaction.id,
+          data: transactionData,
+        });
+      } else {
+        await createMutation.mutateAsync(transactionData);
       }
+      
+      // Close modal on success
+      onOpenChange(false);
     } catch (error) {
+      // Error is handled by mutation hooks and will rollback optimistic update
       console.error("Error saving transaction:", error);
     }
   };
@@ -98,7 +131,7 @@ export function AddTransactionModal({
         <DialogContent className="max-w-md">
           <DialogClose onClose={() => onOpenChange(false)} />
           <DialogHeader>
-            <DialogTitle>Add Transaction</DialogTitle>
+            <DialogTitle>{isEditMode ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 mt-4">
@@ -193,10 +226,26 @@ export function AddTransactionModal({
             <Button
               onClick={handleSave}
               className="w-full"
-              disabled={!amount || !category}
+              disabled={
+                !amount ||
+                !category ||
+                createMutation.isPending ||
+                updateMutation.isPending
+              }
             >
-              Save
+              {createMutation.isPending || updateMutation.isPending
+                ? "Saving..."
+                : isEditMode
+                ? "Update"
+                : "Save"}
             </Button>
+            
+            {/* Error Message */}
+            {(createMutation.isError || updateMutation.isError) && (
+              <p className="text-sm text-destructive text-center">
+                Failed to {isEditMode ? "update" : "create"} transaction. Please try again.
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

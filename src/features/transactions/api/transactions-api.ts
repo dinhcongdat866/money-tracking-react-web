@@ -28,4 +28,65 @@ export async function getTransactionDetail(
   return res.json();
 }
 
+export type CreateTransactionData = {
+  type: "income" | "expense";
+  amount: number;
+  categoryId: string;
+  categoryName: string;
+  date: string;
+  note?: string;
+};
+
+export type UpdateTransactionData = CreateTransactionData;
+
+export async function createTransaction(
+  data: CreateTransactionData,
+): Promise<TransactionItem> {
+  const res = await fetch("/api/transactions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: "Failed to create transaction" }));
+    throw new Error(error.error || "Failed to create transaction");
+  }
+
+  return res.json();
+}
+
+export async function updateTransaction(
+  id: string,
+  data: UpdateTransactionData,
+): Promise<TransactionItem> {
+  const res = await fetch(`/api/mock/transactions/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: "Failed to update transaction" }));
+    throw new Error(error.error || "Failed to update transaction");
+  }
+
+  return res.json();
+}
+
+export async function deleteTransaction(id: string): Promise<void> {
+  const res = await fetch(`/api/mock/transactions/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: "Failed to delete transaction" }));
+    throw new Error(error.error || "Failed to delete transaction");
+  }
+}
+
 

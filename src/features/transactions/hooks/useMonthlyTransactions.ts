@@ -7,7 +7,7 @@ export function useMonthlyTransactions(month: string) {
     queryKey: ["transactions", month],
     queryFn: () => getMonthlyTransactions(month),
     enabled: Boolean(month),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Financial data: always refetch from server
   });
 }
 

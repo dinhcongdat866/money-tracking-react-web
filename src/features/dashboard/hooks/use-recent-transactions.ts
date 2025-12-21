@@ -6,7 +6,7 @@ export function useRecentTransactions() {
   return useQuery<Transaction[]>({
     queryKey: ["recentTransactions"],
     queryFn: getRecentTransactions,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0, // Financial data: always refetch from server
   });
 }
 
