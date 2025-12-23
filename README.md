@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Money Tracking (Next.js App Router)
 
-## Getting Started
+Personal side project to track income/expense and demo practical Next.js 15 App Router patterns (auth, data fetching, pagination, SSR/CSR/ISR, basic tests). Not a production finance app.
 
-First, run the development server:
+### Core business data
+- Transaction: income/expense, amount, date-time, category (id + name), note, id.
+- Summary: current balance, week/month comparison, top spending categories, recent transactions.
+- Reports: public monthly report (ISR) with total income/expense/net, grouped by day with details.
 
+### Main features
+- **Authentication (mock)**: login form; Server Action sets JWT (jose) into httpOnly cookie; middleware guards `/dashboard` + `/transactions`; logout clears cookie.
+- **Dashboard**: balance overview; week/month summaries with Recharts bar chart; top expense categories; recent transactions with infinite scroll (IntersectionObserver) + “Load more”.
+- **Transactions**: month selector; paginated fetch via React Query `useInfiniteQuery`; group by date; view detail; add/edit via modal (CRUD); delete with confirm; quick monthly summary + report modal; expense distribution pie (Recharts).
+- **Reports (public)**: route `/reports/monthly/[month]`; ISR `revalidate` 24h; server component fetch via mock route handlers; shows income/expense/net + list.
+- **API & data layer**: Next.js Route Handlers under `/api/mock/*` (GET/POST/PUT/DELETE, pagination, artificial latency for skeletons) + `/api/transactions` for create; in-memory mock data.
+- **Rendering & state**: React Query for CSR fetching + invalidation; server components for SSR/ISR; client components for interactive UI.
+- **UI/UX**: Tailwind CSS; shadcn/ui + Radix (Tabs, Dialog); lucide-react icons; loading skeletons.
+- **Testing**: Vitest + Testing Library; unit tests for utils; component test for `TransactionDetailPage`; mocked API data.
+
+### Running locally
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev    # http://localhost:3000
+pnpm test   # vitest + jsdom
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
