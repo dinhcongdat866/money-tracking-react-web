@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTransactionById, updateTransaction, deleteTransaction } from "../mock-data";
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 type RouteParams = {
   params: Promise<{ id: string }>;
 };
 
 export async function GET(_req: Request, { params }: RouteParams) {
+  await delay(400);
   const { id } = await params;
   const tx = getTransactionById(id);
 
@@ -18,6 +23,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
+    await delay(400);
     const { id } = await params;
     const body = await req.json();
 
@@ -47,6 +53,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_req: Request, { params }: RouteParams) {
   try {
+    await delay(300);
     const { id } = await params;
     const deleted = deleteTransaction(id);
 

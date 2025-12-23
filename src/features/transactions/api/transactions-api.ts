@@ -1,9 +1,25 @@
 import type { TransactionItem } from "../types";
 
+export type PaginatedTransactionsResponse = {
+  items: TransactionItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+};
+
 export async function getMonthlyTransactions(
   month: string,
-): Promise<TransactionItem[]> {
-  const res = await fetch(`/api/mock/transactions?month=${month}`, {
+  page: number = 1,
+  limit: number = 20,
+): Promise<PaginatedTransactionsResponse> {
+  const params = new URLSearchParams({
+    month,
+    page: String(page),
+    limit: String(limit),
+  });
+
+  const res = await fetch(`/api/mock/transactions?${params.toString()}`, {
     cache: "no-store",
   });
 

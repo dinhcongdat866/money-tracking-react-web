@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { MonthSelector } from "./components/MonthSelector";
 import { MonthlySummaryReport } from "./components/MonthlySummaryReport";
 import { DailyGroupedTransactions } from "./components/DailyGroupedTransactions";
@@ -65,8 +65,38 @@ export default function TransactionsPage() {
     }
   };
 
-  const { data: monthlyTransactions = [], isLoading, isError } =
-    useMonthlyTransactions(selectedMonth);
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMonthlyTransactions(selectedMonth);
+
+  const monthlyTransactions = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data],
+  );
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, selectedMonth]);
 
   const currentMonthDate = useMemo(() => {
     const [year, month] = selectedMonth.split("-").map(Number);
@@ -180,6 +210,21 @@ export default function TransactionsPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
+              <div ref={loadMoreRef} />
+              {hasNextPage && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                  >
+                    {isFetchingNextPage && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {isFetchingNextPage ? "Loading more..." : "Load more"}
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
