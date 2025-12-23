@@ -7,7 +7,7 @@ Personal side project to track income/expense and demo practical Next.js 15 App 
 - Summary: current balance, week/month comparison, top spending categories, recent transactions.
 - Reports: public monthly report (ISR) with total income/expense/net, grouped by day with details.
 
-### Main features (gắn tag phỏng vấn)
+### Main features
 - **Authentication (mock)**: login form; **`Server Action`** sets **`JWT`** (jose) into httpOnly cookie; middleware guards `/dashboard` + `/transactions`; logout clears cookie.
 - **Dashboard**: balance overview; week/month summaries with Recharts bar chart; top expense categories; recent transactions with **infinite scroll** (`IntersectionObserver`) + fallback “Load more”.
 - **Transactions**: month selector; paginated fetch via **`React Query`** `useInfiniteQuery`; group by date; view detail; add/edit via modal (CRUD); delete with confirm; monthly summary + report modal; expense distribution pie (Recharts).
