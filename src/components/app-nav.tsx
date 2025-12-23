@@ -9,6 +9,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
+  { href: "/reports/monthly", label: "Monthly Reports" },
 ];
 
 type AppNavProps = {
