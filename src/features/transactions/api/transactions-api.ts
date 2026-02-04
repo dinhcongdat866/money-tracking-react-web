@@ -1,4 +1,13 @@
 import type { TransactionItem } from "../types";
+import { apiRequest } from "@/lib/api-client";
+import {
+  validateMonth,
+  validatePagination,
+  validateAmount,
+  validateDate,
+  validateTransactionType,
+  validateCategory,
+} from "@/lib/validation";
 
 export type PaginatedTransactionsResponse = {
   items: TransactionItem[];
@@ -13,35 +22,34 @@ export async function getMonthlyTransactions(
   page: number = 1,
   limit: number = 20,
 ): Promise<PaginatedTransactionsResponse> {
+  // Input validation
+  validateMonth(month);
+  const { page: validatedPage, limit: validatedLimit } = validatePagination(page, limit);
+
   const params = new URLSearchParams({
     month,
-    page: String(page),
-    limit: String(limit),
+    page: String(validatedPage),
+    limit: String(validatedLimit),
   });
 
-  const res = await fetch(`/api/mock/transactions?${params.toString()}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch transactions");
-  }
-
-  return res.json();
+  return apiRequest<PaginatedTransactionsResponse>(
+    `/api/mock/transactions?${params.toString()}`,
+    { cache: "no-store" },
+  );
 }
 
 export async function getTransactionDetail(
   id: string,
 ): Promise<TransactionItem> {
-  const res = await fetch(`/api/mock/transactions/${id}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch transaction detail");
+  // Input validation
+  if (!id || typeof id !== 'string') {
+    throw new Error("Transaction ID is required");
   }
 
-  return res.json();
+  return apiRequest<TransactionItem>(
+    `/api/mock/transactions/${id}`,
+    { cache: "no-store" },
+  );
 }
 
 export type CreateTransactionData = {
@@ -58,51 +66,46 @@ export type UpdateTransactionData = CreateTransactionData;
 export async function createTransaction(
   data: CreateTransactionData,
 ): Promise<TransactionItem> {
-  const res = await fetch("/api/transactions", {
+  // Input validation
+  validateAmount(data.amount);
+  validateDate(data.date);
+  validateTransactionType(data.type);
+  validateCategory({ id: data.categoryId, name: data.categoryName });
+
+  return apiRequest<TransactionItem>("/api/mock/transactions", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Failed to create transaction" }));
-    throw new Error(error.error || "Failed to create transaction");
-  }
-
-  return res.json();
 }
 
 export async function updateTransaction(
   id: string,
   data: UpdateTransactionData,
 ): Promise<TransactionItem> {
-  const res = await fetch(`/api/mock/transactions/${id}`, {
+  // Input validation
+  if (!id || typeof id !== 'string') {
+    throw new Error("Transaction ID is required");
+  }
+  validateAmount(data.amount);
+  validateDate(data.date);
+  validateTransactionType(data.type);
+  validateCategory({ id: data.categoryId, name: data.categoryName });
+
+  return apiRequest<TransactionItem>(`/api/mock/transactions/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Failed to update transaction" }));
-    throw new Error(error.error || "Failed to update transaction");
-  }
-
-  return res.json();
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
-  const res = await fetch(`/api/mock/transactions/${id}`, {
+  // Input validation
+  if (!id || typeof id !== 'string') {
+    throw new Error("Transaction ID is required");
+  }
+
+  await apiRequest<void>(`/api/mock/transactions/${id}`, {
     method: "DELETE",
   });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Failed to delete transaction" }));
-    throw new Error(error.error || "Failed to delete transaction");
-  }
 }
 
 

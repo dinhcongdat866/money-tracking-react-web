@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const limit = Math.max(parseInt(searchParams.get("limit") ?? "20", 10), 1);
 
   // Simulate network latency so loaders are visible
-  await delay(1000);
+  await delay(3000);
 
   const allTransactions = getAllTransactions();
   const filtered = month

@@ -1,18 +1,41 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTransaction, type CreateTransactionData } from "../api/transactions-api";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  createTransaction,
+  type CreateTransactionData,
+} from "../api/transactions-api";
+import type { TransactionItem } from "../types";
+import {
+  invalidateAllTransactions,
+  invalidateAllFinancial,
+  invalidateAllAnalytics,
+} from "@/lib/query-keys";
+import type { BaseMutationOptions } from "@/lib/react-query-types";
+import type { ApiError } from "@/lib/api-errors";
 
-export function useCreateTransaction() {
+export type UseCreateTransactionOptions = BaseMutationOptions<
+  TransactionItem,
+  CreateTransactionData
+>;
+
+export function useCreateTransaction(
+  options?: UseCreateTransactionOptions,
+) {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<TransactionItem, ApiError, CreateTransactionData, unknown>({
     mutationFn: createTransaction,
     onSettled: () => {
-      // Invalidate all related queries to refetch from server
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
-      queryClient.invalidateQueries({ queryKey: ["balance"] });
+      // Invalidate all transaction queries (includes monthly, recent, detail)
+      invalidateAllTransactions(queryClient);
+      // Invalidate all financial metric queries (summary, balance)
+      invalidateAllFinancial(queryClient);
+      // Invalidate all analytics queries (mostSpentExpenses, etc.)
+      invalidateAllAnalytics(queryClient);
     },
+    ...options,
   });
 }
 

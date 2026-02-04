@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { TransactionItem } from "../types";
 
 type ExpenseByCategoryProps = {
@@ -33,7 +33,6 @@ export function ExpenseByCategory({ transactions }: ExpenseByCategoryProps) {
   const categoryExpenses = useMemo(() => {
     const expenseMap = new Map<string, { name: string; total: number }>();
 
-    // Tính tổng expense theo category
     transactions
       .filter((tx) => tx.type === "expense")
       .forEach((tx) => {
@@ -50,7 +49,6 @@ export function ExpenseByCategory({ transactions }: ExpenseByCategoryProps) {
       0
     );
 
-    // Chuyển đổi thành array và tính percentage
     const result: CategoryExpense[] = Array.from(expenseMap.entries()).map(
       ([categoryId, { name, total }], index) => ({
         categoryId,
@@ -61,7 +59,6 @@ export function ExpenseByCategory({ transactions }: ExpenseByCategoryProps) {
       })
     );
 
-    // Sắp xếp theo expense giảm dần
     result.sort((a, b) => b.expense - a.expense);
 
     return result;

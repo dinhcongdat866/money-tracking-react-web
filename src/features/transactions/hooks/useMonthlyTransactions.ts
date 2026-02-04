@@ -3,12 +3,20 @@ import {
   getMonthlyTransactions,
   type PaginatedTransactionsResponse,
 } from "../api/transactions-api";
+import { transactionKeys } from "@/lib/query-keys";
+import type { SimpleInfiniteQueryOptions } from "@/lib/react-query-types";
+import type { ApiError } from "@/lib/api-errors";
 
 const PAGE_SIZE = 10;
 
-export function useMonthlyTransactions(month: string) {
-  return useInfiniteQuery<PaginatedTransactionsResponse>({
-    queryKey: ["transactions", month],
+export type UseMonthlyTransactionsOptions = SimpleInfiniteQueryOptions<PaginatedTransactionsResponse>;
+
+export function useMonthlyTransactions(
+  month: string,
+  options?: UseMonthlyTransactionsOptions,
+) {
+  return useInfiniteQuery<PaginatedTransactionsResponse, ApiError>({
+    queryKey: transactionKeys.monthly(month),
     queryFn: ({ pageParam = 1 }) =>
       getMonthlyTransactions(month, pageParam as number, PAGE_SIZE),
     initialPageParam: 1,
@@ -16,6 +24,7 @@ export function useMonthlyTransactions(month: string) {
       lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: Boolean(month),
     staleTime: 0, // Financial data: always refetch from server
+    ...options,
   });
 }
 

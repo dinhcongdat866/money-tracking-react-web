@@ -39,6 +39,19 @@ export default function TransactionsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
   const deleteMutation = useDeleteTransaction();
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMonthlyTransactions(selectedMonth);
+
+  const monthlyTransactions = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data],
+  );
 
   const availableMonths = useMemo(() => getRecentMonthKeys(3), []);
 
@@ -64,20 +77,6 @@ export default function TransactionsPage() {
       setEditingTransaction(null);
     }
   };
-
-  const {
-    data,
-    isLoading,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useMonthlyTransactions(selectedMonth);
-
-  const monthlyTransactions = useMemo(
-    () => data?.pages.flatMap((page) => page.items) ?? [],
-    [data],
-  );
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 

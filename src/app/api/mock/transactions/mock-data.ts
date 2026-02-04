@@ -7,8 +7,8 @@ export function getMonthKey(date: Date) {
   )}`;
 }
 
-// In-memory storage for transactions
-let MOCK_TRANSACTIONS: TransactionItem[] = [
+// Initial mock data
+const INITIAL_MOCK_TRANSACTIONS: TransactionItem[] = [
   {
     id: "t1",
     amount: 25.5,
@@ -195,43 +195,67 @@ let MOCK_TRANSACTIONS: TransactionItem[] = [
   },
 ];
 
+// Use globalThis to persist data across hot reloads and module re-initializations
+// This is a dev-only pattern to simulate persistent storage
+const GLOBAL_STORAGE_KEY = "__MOCK_TRANSACTIONS_STORAGE__";
+
+function getMockTransactions(): TransactionItem[] {
+  // Type assertion for globalThis
+  const globalStorage = globalThis as typeof globalThis & {
+    [GLOBAL_STORAGE_KEY]?: TransactionItem[];
+  };
+
+  // If data exists in globalThis, use it; otherwise initialize with default data
+  if (!globalStorage[GLOBAL_STORAGE_KEY]) {
+    globalStorage[GLOBAL_STORAGE_KEY] = [...INITIAL_MOCK_TRANSACTIONS];
+  }
+
+  return globalStorage[GLOBAL_STORAGE_KEY]!;
+}
+
+// In-memory storage for transactions (now backed by globalThis)
+const MOCK_TRANSACTIONS = getMockTransactions();
+
 // Helper functions to manipulate transactions
 export function getAllTransactions(): TransactionItem[] {
-  return [...MOCK_TRANSACTIONS];
+  return [...getMockTransactions()];
 }
 
 export function getTransactionById(id: string): TransactionItem | undefined {
-  return MOCK_TRANSACTIONS.find((t) => t.id === id);
+  return getMockTransactions().find((t) => t.id === id);
 }
 
 export function addTransaction(transaction: Omit<TransactionItem, "id">): TransactionItem {
+  const transactions = getMockTransactions();
   const newTransaction: TransactionItem = {
     ...transaction,
     id: `t${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   };
-  MOCK_TRANSACTIONS.push(newTransaction);
+  transactions.push(newTransaction);
   return newTransaction;
 }
 
 export function updateTransaction(id: string, updates: Partial<Omit<TransactionItem, "id">>): TransactionItem | null {
-  const index = MOCK_TRANSACTIONS.findIndex((t) => t.id === id);
+  const transactions = getMockTransactions();
+  const index = transactions.findIndex((t) => t.id === id);
   if (index === -1) {
     return null;
   }
-  MOCK_TRANSACTIONS[index] = {
-    ...MOCK_TRANSACTIONS[index],
+  transactions[index] = {
+    ...transactions[index],
     ...updates,
     id, // Ensure id doesn't change
   };
-  return MOCK_TRANSACTIONS[index];
+  return transactions[index];
 }
 
 export function deleteTransaction(id: string): boolean {
-  const index = MOCK_TRANSACTIONS.findIndex((t) => t.id === id);
+  const transactions = getMockTransactions();
+  const index = transactions.findIndex((t) => t.id === id);
   if (index === -1) {
     return false;
   }
-  MOCK_TRANSACTIONS.splice(index, 1);
+  transactions.splice(index, 1);
   return true;
 }
 

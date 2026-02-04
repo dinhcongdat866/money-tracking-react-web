@@ -1,13 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTransactionDetail } from "../api/transactions-api";
 import type { TransactionItem } from "../types";
+import { transactionKeys } from "@/lib/query-keys";
+import type { BaseQueryOptions, QueryKeyOf } from "@/lib/react-query-types";
+import type { ApiError } from "@/lib/api-errors";
 
-export function useTransactionDetail(id: string | undefined) {
-  return useQuery<TransactionItem>({
-    queryKey: ["transaction", id],
+type DetailQueryKey = QueryKeyOf<typeof transactionKeys.detail>;
+type DetailsQueryKey = QueryKeyOf<typeof transactionKeys.details>;
+type TransactionDetailQueryKey = DetailQueryKey | DetailsQueryKey;
+
+export type UseTransactionDetailOptions = BaseQueryOptions<
+  TransactionItem,
+  TransactionDetailQueryKey
+>;
+
+export function useTransactionDetail(
+  id: string | undefined,
+  options?: UseTransactionDetailOptions,
+) {
+  return useQuery<TransactionItem, ApiError, TransactionItem, TransactionDetailQueryKey>({
+    queryKey: (id ? transactionKeys.detail(id) : transactionKeys.details()) as TransactionDetailQueryKey,
     queryFn: () => getTransactionDetail(id as string),
     enabled: Boolean(id),
     staleTime: 0, // Financial data: always refetch from server
+    ...options,
   });
 }
 
