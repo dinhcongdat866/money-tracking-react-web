@@ -26,7 +26,7 @@ export type BaseQueryOptions<
   TQueryKey extends readonly unknown[],
 > = Omit<
   UseQueryOptions<TData, ApiError, TData, TQueryKey>,
-  "queryKey" | "queryFn" | "enabled"
+  "queryKey" | "queryFn"
 >;
 
 /**
