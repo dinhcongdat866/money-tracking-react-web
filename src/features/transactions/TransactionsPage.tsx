@@ -11,6 +11,8 @@ import { AddTransactionModal } from "./components/AddTransactionModal";
 import type { GroupedTransactions, MonthlySummary, TransactionItem } from "./types";
 import { useMonthlyTransactions } from "./hooks/useMonthlyTransactions";
 import { useDeleteTransaction } from "./hooks/useDeleteTransaction";
+import { useMonthlySummary } from "./hooks/useMonthlySummary";
+import { useIsMutating } from "@tanstack/react-query";
 
 function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -47,6 +49,11 @@ export default function TransactionsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useMonthlyTransactions(selectedMonth);
+
+  const {
+    data: summaryData,
+    isPending: isSummaryPending,
+  } = useMonthlySummary(selectedMonth);
 
   const monthlyTransactions = useMemo(
     () => data?.pages.flatMap((page) => page.items) ?? [],
@@ -139,10 +146,7 @@ export default function TransactionsPage() {
   }, [monthlyTransactions]);
 
   const monthlySummary: MonthlySummary = useMemo(() => {
-    const apiSummary = data?.pages?.[0]?.summary;
-    if (apiSummary) {
-      return apiSummary;
-    }
+    if (summaryData) return summaryData;
 
     return {
       month: formatMonthLabel(currentMonthDate),
@@ -150,7 +154,11 @@ export default function TransactionsPage() {
       totalAfter: 0,
       difference: 0,
     };
-  }, [data, currentMonthDate]);
+  }, [summaryData, currentMonthDate]);
+
+  const isTransactionsMutating = useIsMutating({
+    mutationKey: ["transactions", "mutation"],
+  }) > 0;
 
   const hasData = monthlyTransactions.length > 0;
 
@@ -188,6 +196,7 @@ export default function TransactionsPage() {
               <MonthlySummaryReport
                 summary={monthlySummary}
                 transactions={monthlyTransactions}
+                isUpdating={isTransactionsMutating || isSummaryPending}
               />
               <DailyGroupedTransactions
                 groups={grouped}

@@ -9,9 +9,14 @@ import type { TransactionItem } from "../types";
 type MonthlySummaryReportProps = {
   summary: MonthlySummary;
   transactions: TransactionItem[];
+  isUpdating?: boolean;
 };
 
-export function MonthlySummaryReport({ summary, transactions }: MonthlySummaryReportProps) {
+export function MonthlySummaryReport({
+  summary,
+  transactions,
+  isUpdating,
+}: MonthlySummaryReportProps) {
   const { month, totalBefore, totalAfter, difference } = summary;
   const isPositive = difference >= 0;
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +30,11 @@ export function MonthlySummaryReport({ summary, transactions }: MonthlySummaryRe
               Monthly Summary
             </p>
             <p className="text-lg font-semibold">{month}</p>
+            {isUpdating && (
+              <p className="text-[11px] text-muted-foreground">
+                Updating summary...
+              </p>
+            )}
           </div>
           <Button
             variant="outline"
@@ -36,39 +46,39 @@ export function MonthlySummaryReport({ summary, transactions }: MonthlySummaryRe
           </Button>
         </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <p className="text-xs text-muted-foreground">Before</p>
-          <p className="text-base font-semibold">
-            ${totalBefore.toLocaleString()}
-          </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Before</p>
+            <p className="text-base font-semibold">
+              ${totalBefore.toLocaleString()}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">After</p>
+            <p className="text-base font-semibold">
+              ${totalAfter.toLocaleString()}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Difference</p>
+            <p
+              className={`text-base font-semibold ${
+                isPositive ? "text-emerald-500" : "text-rose-500"
+              }`}
+            >
+              {isPositive ? "+" : "-"}$
+              {Math.abs(difference).toLocaleString()}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs text-muted-foreground">After</p>
-          <p className="text-base font-semibold">
-            ${totalAfter.toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Difference</p>
-          <p
-            className={`text-base font-semibold ${
-              isPositive ? "text-emerald-500" : "text-rose-500"
-            }`}
-          >
-            {isPositive ? "+" : "-"}$
-            {Math.abs(difference).toLocaleString()}
-          </p>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <MonthlyReportModal
-      open={isModalOpen}
-      onOpenChange={setIsModalOpen}
-      summary={summary}
-      transactions={transactions}
-    />
+      <MonthlyReportModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        summary={summary}
+        transactions={transactions}
+      />
     </>
   );
 }

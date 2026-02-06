@@ -29,6 +29,10 @@ export const transactionKeys = {
   monthly: (month: string) =>
     [...transactionKeys.all, 'monthly', month] as const,
 
+  /** Monthly summary query for a specific month */
+  monthlySummary: (month: string) =>
+    [...transactionKeys.all, 'monthlySummary', month] as const,
+
   /** Recent transactions query */
   recent: () =>
     [...transactionKeys.all, 'recent'] as const,

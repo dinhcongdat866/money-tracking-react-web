@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_req: Request, { params }: RouteParams) {
   try {
-    await delay(300);
+    await delay(3000);
     const { id } = await params;
     const deleted = deleteTransaction(id);
 

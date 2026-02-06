@@ -16,9 +16,7 @@ import type { ApiError } from "@/lib/api-errors";
 import type { PaginatedTransactionsResponse } from "../api/transactions-api";
 
 type DeleteTransactionContext = {
-  previousTransactions: Array<
-    [QueryKey, InfiniteData<PaginatedTransactionsResponse> | undefined]
-  >;
+  previousTransactions: Array<[QueryKey, unknown]>;
 };
 
 export type UseDeleteTransactionOptions = BaseMutationOptions<
@@ -33,34 +31,44 @@ export function useDeleteTransaction(
   const queryClient = useQueryClient();
 
   return useMutation<void, ApiError, string, DeleteTransactionContext>({
+    mutationKey: ["transactions", "mutation", "delete"],
     mutationFn: deleteTransaction,
-    // Optimistic update: remove the transaction from all cached transaction lists
+    // Optimistic update: remove the transaction from relevant cached transaction lists
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+      await queryClient.cancelQueries({ queryKey: transactionKeys.all });
 
-      const previousTransactions =
-        queryClient.getQueriesData<InfiniteData<PaginatedTransactionsResponse>>(
-          { queryKey: ["transactions"] },
-        );
+      const previousTransactions = queryClient.getQueriesData(
+        { queryKey: transactionKeys.all },
+      );
 
-      for (const [queryKey, data] of previousTransactions) {
-        if (!data) continue;
+      for (const [key, data] of previousTransactions) {
+        if (!Array.isArray(key) || key[0] !== "transactions" || !data) continue;
+
+        const scope = key[1];
+
+        // Skip detail queries entirely
+        if (scope === "detail") continue;
+
+        // Runtime guard to ensure we only cast when data looks like InfiniteData
+        const infinite = data as InfiniteData<PaginatedTransactionsResponse>;
+        if (!Array.isArray(infinite.pages)) continue;
 
         const updated: InfiniteData<PaginatedTransactionsResponse> = {
-          pageParams: data.pageParams,
-          pages: data.pages.map((page) => {
+          pageParams: infinite.pageParams,
+          pages: infinite.pages.map((page) => {
             const filteredItems = page.items.filter((tx) => tx.id !== id);
             return {
               ...page,
               items: filteredItems,
-              total: filteredItems.length < page.items.length
-                ? page.total - 1
-                : page.total,
+              total:
+                filteredItems.length < page.items.length
+                  ? page.total - 1
+                  : page.total,
             };
           }),
         };
 
-        queryClient.setQueryData(queryKey, updated);
+        queryClient.setQueryData(key, updated);
       }
 
       return { previousTransactions };

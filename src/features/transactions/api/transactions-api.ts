@@ -15,7 +15,6 @@ export type PaginatedTransactionsResponse = {
   pageSize: number;
   total: number;
   hasMore: boolean;
-  summary?: MonthlySummary;
 };
 
 export async function getMonthlyTransactions(
@@ -35,6 +34,22 @@ export async function getMonthlyTransactions(
 
   return apiRequest<PaginatedTransactionsResponse>(
     `/api/mock/transactions?${params.toString()}`,
+    { cache: "no-store" },
+  );
+}
+
+export async function getMonthlySummaryApi(
+  month: string,
+): Promise<MonthlySummary> {
+  // Input validation
+  validateMonth(month);
+
+  const params = new URLSearchParams({
+    month,
+  });
+
+  return apiRequest<MonthlySummary>(
+    `/api/mock/transactions/summary?${params.toString()}`,
     { cache: "no-store" },
   );
 }
