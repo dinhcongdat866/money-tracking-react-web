@@ -9,9 +9,8 @@ import {
 import type { TransactionItem } from "../types";
 import {
   transactionKeys,
-  invalidateAllTransactions,
-  invalidateAllFinancial,
-  invalidateAllAnalytics,
+  financialKeys,
+  analyticsKeys,
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
@@ -21,9 +20,14 @@ export type UpdateTransactionVariables = {
   data: UpdateTransactionData;
 };
 
+type UpdateTransactionContext = {
+  previousMonthKey?: string;
+};
+
 export type UseUpdateTransactionOptions = BaseMutationOptions<
   TransactionItem,
-  UpdateTransactionVariables
+  UpdateTransactionVariables,
+  UpdateTransactionContext
 >;
 
 export function useUpdateTransaction(
@@ -31,19 +35,64 @@ export function useUpdateTransaction(
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<TransactionItem, ApiError, UpdateTransactionVariables, unknown>({
+  return useMutation<
+    TransactionItem,
+    ApiError,
+    UpdateTransactionVariables,
+    UpdateTransactionContext
+  >({
     mutationFn: ({ id, data }) => updateTransaction(id, data),
-    onSettled: (data, error, variables) => {
+    onMutate: async ({ id }) => {
+      const prev = queryClient.getQueryData<TransactionItem>(
+        transactionKeys.detail(id),
+      );
+      let previousMonthKey: string | undefined;
+      if (prev) {
+        const d = new Date(prev.date);
+        previousMonthKey = `${d.getFullYear()}-${String(
+          d.getMonth() + 1,
+        ).padStart(2, "0")}`;
+      }
+
+      return { previousMonthKey };
+    },
+    onSettled: (data, _error, variables, context) => {
       // Invalidate the specific transaction detail
       queryClient.invalidateQueries({
         queryKey: transactionKeys.detail(variables.id),
       });
-      // Invalidate all transaction queries (includes monthly, recent)
-      invalidateAllTransactions(queryClient);
-      // Invalidate all financial metric queries (summary, balance)
-      invalidateAllFinancial(queryClient);
-      // Invalidate all analytics queries (mostSpentExpenses, etc.)
-      invalidateAllAnalytics(queryClient);
+
+      const affectedMonths = new Set<string>();
+
+      if (context?.previousMonthKey) {
+        affectedMonths.add(context.previousMonthKey);
+      }
+
+      if (data) {
+        const d = new Date(data.date);
+        affectedMonths.add(
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+            2,
+            "0",
+          )}`,
+        );
+      }
+
+      for (const monthKey of affectedMonths) {
+        queryClient.invalidateQueries({
+          queryKey: transactionKeys.monthly(monthKey),
+        });
+        queryClient.invalidateQueries({
+          queryKey: transactionKeys.monthlySummary(monthKey),
+        });
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: transactionKeys.recent(),
+      });
+
+      queryClient.invalidateQueries({ queryKey: financialKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
     ...options,
   });

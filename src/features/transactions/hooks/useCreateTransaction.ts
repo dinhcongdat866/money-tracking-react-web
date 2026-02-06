@@ -11,10 +11,9 @@ import {
 import type { TransactionItem } from "../types";
 import type { PaginatedTransactionsResponse } from "../api/transactions-api";
 import {
-  invalidateAllTransactions,
-  invalidateAllFinancial,
-  invalidateAllAnalytics,
   transactionKeys,
+  financialKeys,
+  analyticsKeys,
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
@@ -112,11 +111,28 @@ export function useCreateTransaction(
         queryClient.setQueryData(queryKey, data);
       }
     },
-    onSettled: () => {
-      // Ensure data is in sync with server
-      invalidateAllTransactions(queryClient);
-      invalidateAllFinancial(queryClient);
-      invalidateAllAnalytics(queryClient);
+    onSettled: (data, _error, variables) => {
+      const dateSource = data?.date ?? variables.date;
+      const d = new Date(dateSource);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0",
+      )}`;
+
+      // Invalidate only the affected monthly list and summary
+      queryClient.invalidateQueries({
+        queryKey: transactionKeys.monthly(monthKey),
+      });
+      queryClient.invalidateQueries({
+        queryKey: transactionKeys.monthlySummary(monthKey),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: transactionKeys.recent(),
+      });
+
+      queryClient.invalidateQueries({ queryKey: financialKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
     ...options,
   });

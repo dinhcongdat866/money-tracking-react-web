@@ -7,16 +7,17 @@ import {
 import { deleteTransaction } from "../api/transactions-api";
 import {
   transactionKeys,
-  invalidateAllTransactions,
-  invalidateAllFinancial,
-  invalidateAllAnalytics,
+  financialKeys,
+  analyticsKeys,
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
 import type { PaginatedTransactionsResponse } from "../api/transactions-api";
+import type { TransactionItem } from "../types";
 
 type DeleteTransactionContext = {
   previousTransactions: Array<[QueryKey, unknown]>;
+  previousMonthKey?: string;
 };
 
 export type UseDeleteTransactionOptions = BaseMutationOptions<
@@ -33,13 +34,24 @@ export function useDeleteTransaction(
   return useMutation<void, ApiError, string, DeleteTransactionContext>({
     mutationKey: ["transactions", "mutation", "delete"],
     mutationFn: deleteTransaction,
-    // Optimistic update: remove the transaction from relevant cached transaction lists
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: transactionKeys.all });
 
       const previousTransactions = queryClient.getQueriesData(
         { queryKey: transactionKeys.all },
       );
+
+      // Capture previous month of this transaction (if detail is cached)
+      const prevDetail = queryClient.getQueryData<TransactionItem>(
+        transactionKeys.detail(id),
+      );
+      let previousMonthKey: string | undefined;
+      if (prevDetail) {
+        const d = new Date(prevDetail.date);
+        previousMonthKey = `${d.getFullYear()}-${String(
+          d.getMonth() + 1,
+        ).padStart(2, "0")}`;
+      }
 
       for (const [key, data] of previousTransactions) {
         if (!Array.isArray(key) || key[0] !== "transactions" || !data) continue;
@@ -71,7 +83,7 @@ export function useDeleteTransaction(
         queryClient.setQueryData(key, updated);
       }
 
-      return { previousTransactions };
+      return { previousTransactions, previousMonthKey };
     },
     onError: (_error, _id, context) => {
       // Rollback to previous state if mutation fails
@@ -80,13 +92,25 @@ export function useDeleteTransaction(
         queryClient.setQueryData(queryKey, data);
       }
     },
-    onSettled: (_data, _error, id) => {
+    onSettled: (_data, _error, id, context) => {
       // Ensure detail view is refreshed
       queryClient.invalidateQueries({ queryKey: transactionKeys.detail(id) });
-      // Ensure lists and aggregates are in sync with server
-      invalidateAllTransactions(queryClient);
-      invalidateAllFinancial(queryClient);
-      invalidateAllAnalytics(queryClient);
+
+      if (context?.previousMonthKey) {
+        queryClient.invalidateQueries({
+          queryKey: transactionKeys.monthly(context.previousMonthKey),
+        });
+        queryClient.invalidateQueries({
+          queryKey: transactionKeys.monthlySummary(context.previousMonthKey),
+        });
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: transactionKeys.recent(),
+      });
+
+      queryClient.invalidateQueries({ queryKey: financialKeys.all });
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
     ...options,
   });
