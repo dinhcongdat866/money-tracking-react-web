@@ -139,33 +139,18 @@ export default function TransactionsPage() {
   }, [monthlyTransactions]);
 
   const monthlySummary: MonthlySummary = useMemo(() => {
-    if (!monthlyTransactions || monthlyTransactions.length === 0) {
-      return {
-        month: formatMonthLabel(currentMonthDate),
-        totalBefore: 0,
-        totalAfter: 0,
-        difference: 0,
-      };
+    const apiSummary = data?.pages?.[0]?.summary;
+    if (apiSummary) {
+      return apiSummary;
     }
-
-    const totalIncome = monthlyTransactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const totalExpense = monthlyTransactions
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const before = totalIncome; // mock: before = income
-    const after = totalIncome - totalExpense;
-    const difference = after - before;
 
     return {
       month: formatMonthLabel(currentMonthDate),
-      totalBefore: before,
-      totalAfter: after,
-      difference,
+      totalBefore: 0,
+      totalAfter: 0,
+      difference: 0,
     };
-  }, [monthlyTransactions, currentMonthDate]);
+  }, [data, currentMonthDate]);
 
   const hasData = monthlyTransactions.length > 0;
 

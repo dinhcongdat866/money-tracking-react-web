@@ -1,4 +1,4 @@
-import type { TransactionItem } from "../types";
+import type { TransactionItem, MonthlySummary } from "../types";
 import { apiRequest } from "@/lib/api-client";
 import {
   validateMonth,
@@ -15,6 +15,7 @@ export type PaginatedTransactionsResponse = {
   pageSize: number;
   total: number;
   hasMore: boolean;
+  summary?: MonthlySummary;
 };
 
 export async function getMonthlyTransactions(
