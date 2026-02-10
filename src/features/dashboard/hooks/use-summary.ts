@@ -17,7 +17,7 @@ export function useSummary(
   return useQuery<Summary, ApiError, Summary, QueryKeyOf<typeof financialKeys.summary>>({
     queryKey: financialKeys.summary(timeRange),
     queryFn: () => getSummary(timeRange),
-    staleTime: 0, // Financial data: always refetch from server
+    staleTime: 30 * 1000,
     ...options,
   });
 }

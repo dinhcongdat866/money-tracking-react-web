@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TransactionItem } from "../types";
+import { usePrefetchTransactionDetail } from "../hooks/usePrefetchTransactionDetail";
 
 type TransactionListItemProps = {
   transaction: TransactionItem;
@@ -18,6 +19,7 @@ export function TransactionListItem({
   onEdit,
   onDelete,
 }: TransactionListItemProps) {
+  const { schedule, cancel } = usePrefetchTransactionDetail();
   const date = new Date(transaction.date);
 
   const dateTimeDisplay = showFullDateTime
@@ -50,6 +52,9 @@ export function TransactionListItem({
       <Link
         href={`/transactions/${transaction.id}`}
         className="flex items-center justify-between gap-3 flex-1 min-w-0"
+        onMouseEnter={() => schedule(transaction.id)}
+        onFocus={() => schedule(transaction.id)}
+        onMouseLeave={cancel}
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">

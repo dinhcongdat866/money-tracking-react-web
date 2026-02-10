@@ -13,6 +13,7 @@ import { useMonthlyTransactions } from "./hooks/useMonthlyTransactions";
 import { useDeleteTransaction } from "./hooks/useDeleteTransaction";
 import { useMonthlySummary } from "./hooks/useMonthlySummary";
 import { useIsMutating } from "@tanstack/react-query";
+import { usePrefetchNextMonth } from "./hooks/usePrefetchNextMonth";
 
 function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -86,6 +87,7 @@ export default function TransactionsPage() {
   };
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const prefetchNextMonth = usePrefetchNextMonth(selectedMonth);
 
   useEffect(() => {
     const node = loadMoreRef.current;
@@ -94,6 +96,7 @@ export default function TransactionsPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          prefetchNextMonth();
           fetchNextPage();
         }
       },
@@ -102,7 +105,7 @@ export default function TransactionsPage() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, selectedMonth]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, prefetchNextMonth]);
 
   const currentMonthDate = useMemo(() => {
     const [year, month] = selectedMonth.split("-").map(Number);

@@ -21,10 +21,13 @@ import {
   Cell,
 } from "recharts";
 import { TimeRange } from "../types";
+import { usePrefetchSummaryRange } from "../hooks/usePrefetchSummaryRange";
 
 export function SummaryCard() {
   const [timeRange, setTimeRange] = useState<TimeRange>("week");
   const { data, isLoading } = useSummary(timeRange);
+
+  const { schedule, cancel } = usePrefetchSummaryRange();
 
   const summary = data
     ? [
@@ -54,8 +57,22 @@ export function SummaryCard() {
           </CardTitle>
           <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
             <TabsList>
-              <TabsTrigger value="week">Week</TabsTrigger>
-              <TabsTrigger value="month">Month</TabsTrigger>
+              <TabsTrigger
+                value="week"
+                onMouseEnter={() => timeRange !== "week" && schedule("week")}
+                onFocus={() => timeRange !== "week" && schedule("week")}
+                onMouseLeave={cancel}
+              >
+                Week
+              </TabsTrigger>
+              <TabsTrigger
+                value="month"
+                onMouseEnter={() => timeRange !== "month" && schedule("month")}
+                onFocus={() => timeRange !== "month" && schedule("month")}
+                onMouseLeave={cancel}
+              >
+                Month
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -68,9 +85,11 @@ export function SummaryCard() {
             <BarChart data={summary} barSize={40}>
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(v) => `${v}$`} />
-              <Tooltip
-                formatter={(v: number) => `${v.toLocaleString()}$`}
-              />
+              <Tooltip formatter={(value) =>
+                typeof value === "number"
+                  ? `${value.toLocaleString()}$`
+                  : `${value ?? ""}`
+              } />
               <Bar dataKey="value">
                 {summary.map((entry, index) => (
                   <Cell

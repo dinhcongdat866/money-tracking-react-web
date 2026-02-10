@@ -6,10 +6,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useMostSpentExpenses } from "../hooks/use-most-spent-expenses";
 import { TimeRange } from "../types";
+import { usePrefetchMostSpentRange } from "../hooks/usePrefetchMostSpentRange";
 
 export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
     const [range, setRange] = useState<TimeRange>("month");
     const { data, isLoading } = useMostSpentExpenses(range, limit);
+
+    const { schedule, cancel } = usePrefetchMostSpentRange(limit);
 
     return (
         <Card>
@@ -20,8 +23,22 @@ export function MostSpentExpensesCard({ limit = 3 }: { limit?: number }) {
                     <div className="flex gap-2">
                         <Tabs value={range} onValueChange={(v) => setRange(v as TimeRange)}>
                             <TabsList>
-                                <TabsTrigger value="week">Week</TabsTrigger>
-                                <TabsTrigger value="month">Month</TabsTrigger>
+                                <TabsTrigger
+                                    value="week"
+                                    onMouseEnter={() => range !== "week" && schedule("week", limit)}
+                                    onFocus={() => range !== "week" && schedule("week", limit)}
+                                    onMouseLeave={cancel}
+                                >
+                                    Week
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="month"
+                                    onMouseEnter={() => range !== "month" && schedule("month", limit)}
+                                    onFocus={() => range !== "month" && schedule("month", limit)}
+                                    onMouseLeave={cancel}
+                                >
+                                    Month
+                                </TabsTrigger>
                             </TabsList>
                         </Tabs>
                     </div>
