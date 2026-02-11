@@ -12,6 +12,7 @@ import {
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
+import { useToast } from "@/components/ToastProvider";
 import type { PaginatedTransactionsResponse } from "../api/transactions-api";
 import type { TransactionItem } from "../types";
 
@@ -30,6 +31,7 @@ export function useDeleteTransaction(
   options?: UseDeleteTransactionOptions,
 ) {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   return useMutation<void, ApiError, string, DeleteTransactionContext>({
     mutationKey: ["transactions", "mutation", "delete"],
@@ -85,12 +87,25 @@ export function useDeleteTransaction(
 
       return { previousTransactions, previousMonthKey };
     },
-    onError: (_error, _id, context) => {
+    onSuccess: () => {
+      showToast({
+        title: "Transaction deleted",
+        description: "The transaction has been removed.",
+        variant: "success",
+      });
+    },
+    onError: (error, _id, context) => {
       // Rollback to previous state if mutation fails
-      if (!context?.previousTransactions) return;
-      for (const [queryKey, data] of context.previousTransactions) {
-        queryClient.setQueryData(queryKey, data);
+      if (context?.previousTransactions) {
+        for (const [queryKey, data] of context.previousTransactions) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
+      showToast({
+        title: "Failed to delete transaction",
+        description: error.message,
+        variant: "error",
+      });
     },
     onSettled: (_data, _error, id, context) => {
       // Ensure detail view is refreshed

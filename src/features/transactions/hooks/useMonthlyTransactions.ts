@@ -24,6 +24,7 @@ export function useMonthlyTransactions(
       lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: Boolean(month),
     staleTime: 0, // Financial data: always refetch from server
+    placeholderData: (previousData) => previousData, // Keep previous month data while fetching new month
     ...options,
   });
 }

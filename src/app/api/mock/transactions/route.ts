@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     
     delay(3000);
     return NextResponse.json(transaction, { status: 201 });
-  } catch (error) {
+    } catch {
     return NextResponse.json(
       { error: "Failed to create transaction" },
       { status: 500 }

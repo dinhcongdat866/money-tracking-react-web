@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
 import { MonthSelector } from "./components/MonthSelector";
 import { MonthlySummaryReport } from "./components/MonthlySummaryReport";
+import { MonthlySummarySkeleton } from "./components/MonthlySummarySkeleton";
 import { DailyGroupedTransactions } from "./components/DailyGroupedTransactions";
+import { DailyTransactionsSkeleton } from "./components/DailyTransactionsSkeleton";
 import { AddTransactionModal } from "./components/AddTransactionModal";
 import type { GroupedTransactions, MonthlySummary, TransactionItem } from "./types";
 import { useMonthlyTransactions } from "./hooks/useMonthlyTransactions";
@@ -14,6 +16,8 @@ import { useDeleteTransaction } from "./hooks/useDeleteTransaction";
 import { useMonthlySummary } from "./hooks/useMonthlySummary";
 import { useIsMutating } from "@tanstack/react-query";
 import { usePrefetchNextMonth } from "./hooks/usePrefetchNextMonth";
+import { ReactQueryErrorBoundary } from "@/components/ReactQueryErrorBoundary";
+import { ErrorBoundaryTestButton } from "@/components/ErrorBoundaryTestButton";
 
 function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -166,14 +170,17 @@ export default function TransactionsPage() {
   const hasData = monthlyTransactions.length > 0;
 
   return (
-    <>
+    <ReactQueryErrorBoundary>
       <div className="flex w-full flex-col gap-6 px-4 py-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
-          </Button>
+          <div className="flex items-center gap-2">
+            <ErrorBoundaryTestButton />
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Transaction
+            </Button>
+          </div>
         </div>
 
       <Card>
@@ -187,47 +194,50 @@ export default function TransactionsPage() {
             onChange={setSelectedMonth}
           />
         </CardHeader>
-        <CardContent className="space-y-6">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          ) : isError ? (
-            <p className="text-sm text-destructive">
-              Failed to load transactions.
-            </p>
-          ) : hasData ? (
-            <>
-              <MonthlySummaryReport
-                summary={monthlySummary}
-                transactions={monthlyTransactions}
-                isUpdating={isTransactionsMutating || isSummaryPending}
-              />
-              <DailyGroupedTransactions
-                groups={grouped}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-              <div ref={loadMoreRef} />
-              {hasNextPage && (
-                <div className="flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchNextPage()}
-                    disabled={isFetchingNextPage}
-                  >
-                    {isFetchingNextPage && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {isFetchingNextPage ? "Loading more..." : "Load more"}
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No transactions for this month.
-            </p>
-          )}
-        </CardContent>
+          <CardContent className="space-y-6">
+            {isLoading ? (
+              <>
+                <MonthlySummarySkeleton />
+                <DailyTransactionsSkeleton />
+              </>
+            ) : isError ? (
+              <p className="text-sm text-destructive">
+                Failed to load transactions.
+              </p>
+            ) : hasData ? (
+              <>
+                <MonthlySummaryReport
+                  summary={monthlySummary}
+                  transactions={monthlyTransactions}
+                  isUpdating={isTransactionsMutating || isSummaryPending}
+                />
+                <DailyGroupedTransactions
+                  groups={grouped}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+                <div ref={loadMoreRef} />
+                {hasNextPage && (
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                    >
+                      {isFetchingNextPage && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      {isFetchingNextPage ? "Loading more..." : "Load more"}
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No transactions for this month.
+              </p>
+            )}
+          </CardContent>
       </Card>
     </div>
 
@@ -236,7 +246,7 @@ export default function TransactionsPage() {
       onOpenChange={handleModalClose}
       transaction={editingTransaction}
     />
-    </>
+    </ReactQueryErrorBoundary>
   );
 }
 

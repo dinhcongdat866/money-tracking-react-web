@@ -19,6 +19,7 @@ export function useMostSpentExpenses(
     queryKey: analyticsKeys.mostSpentExpenses(timeRange, limit),
     queryFn: () => getMostSpentExpenses(timeRange, limit),
     staleTime: 1000 * 60 * 60 * 1, // 1 hour
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
     ...options,
   });
 }

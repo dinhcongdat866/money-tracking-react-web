@@ -14,6 +14,7 @@ import {
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
+import { useToast } from "@/components/ToastProvider";
 
 export type UpdateTransactionVariables = {
   id: string;
@@ -34,6 +35,7 @@ export function useUpdateTransaction(
   options?: UseUpdateTransactionOptions,
 ) {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   return useMutation<
     TransactionItem,
@@ -55,6 +57,20 @@ export function useUpdateTransaction(
       }
 
       return { previousMonthKey };
+    },
+    onSuccess: () => {
+      showToast({
+        title: "Transaction updated",
+        description: "Your changes have been saved.",
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      showToast({
+        title: "Failed to update transaction",
+        description: error.message,
+        variant: "error",
+      });
     },
     onSettled: (data, _error, variables, context) => {
       // Invalidate the specific transaction detail

@@ -17,6 +17,7 @@ import {
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
+import { useToast } from "@/components/ToastProvider";
 
 type CreateTransactionContext = {
   previousTransactions: Array<[QueryKey, unknown]>;
@@ -32,6 +33,7 @@ export function useCreateTransaction(
   options?: UseCreateTransactionOptions,
 ) {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   return useMutation<
     TransactionItem,
@@ -104,12 +106,25 @@ export function useCreateTransaction(
 
       return { previousTransactions };
     },
-    onError: (_error, _variables, context) => {
+    onSuccess: () => {
+      showToast({
+        title: "Transaction created",
+        description: "Your transaction has been saved.",
+        variant: "success",
+      });
+    },
+    onError: (error, _variables, context) => {
       // Rollback to previous state if mutation fails
-      if (!context?.previousTransactions) return;
-      for (const [queryKey, data] of context.previousTransactions) {
-        queryClient.setQueryData(queryKey, data);
+      if (context?.previousTransactions) {
+        for (const [queryKey, data] of context.previousTransactions) {
+          queryClient.setQueryData(queryKey, data);
+        }
       }
+      showToast({
+        title: "Failed to create transaction",
+        description: error.message,
+        variant: "error",
+      });
     },
     onSettled: (data, _error, variables) => {
       const dateSource = data?.date ?? variables.date;

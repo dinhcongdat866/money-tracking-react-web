@@ -26,6 +26,7 @@ export function useMonthlySummary(
     queryFn: () => getMonthlySummaryApi(month),
     enabled: Boolean(month),
     staleTime: 0, // Always refetch for financial summary
+    placeholderData: (previousData) => previousData, // Keep previous summary while fetching new month
     ...options,
   });
 }

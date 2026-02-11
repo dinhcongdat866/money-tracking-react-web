@@ -43,7 +43,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to update transaction" },
       { status: 500 }
@@ -62,7 +62,7 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to delete transaction" },
       { status: 500 }

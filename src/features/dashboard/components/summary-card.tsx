@@ -25,7 +25,7 @@ import { usePrefetchSummaryRange } from "../hooks/usePrefetchSummaryRange";
 
 export function SummaryCard() {
   const [timeRange, setTimeRange] = useState<TimeRange>("week");
-  const { data, isLoading } = useSummary(timeRange);
+  const { data, isLoading, isError } = useSummary(timeRange);
 
   const { schedule, cancel } = usePrefetchSummaryRange();
 
@@ -80,6 +80,10 @@ export function SummaryCard() {
       <CardContent className="h-[180px]">
         {isLoading ? (
           <Skeleton className="h-full w-full" />
+        ) : isError ? (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-destructive">Failed to load summary</p>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={summary} barSize={40}>

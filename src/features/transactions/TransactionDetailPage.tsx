@@ -44,7 +44,7 @@ export function TransactionDetailPage({ id }: TransactionDetailPageProps) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
         <p className="text-sm text-destructive">
-          Transaction not found or failed to load.
+          {isError ? "Failed to load transaction." : "Transaction not found."}
         </p>
       </div>
     );

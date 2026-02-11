@@ -5,24 +5,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "../hooks/use-balance";
 
 export function BalanceCard() {
-    const { data, isLoading, isError } = useBalance();
+  const { data, isLoading, isError } = useBalance();
 
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Current Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <Skeleton className="h-10 w-full" />
-                ) : isError ? (
-                    <p className="text-destructive">Error loading balance</p>
-                ) : (
-                    <p className="text-3xl font-bold">
-                        {data?.currency} {data?.amount.toLocaleString()}
-                    </p>
-                )}
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Current Balance</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : isError ? (
+          <p className="text-sm text-destructive">Failed to load balance</p>
+        ) : (
+          <p className="text-3xl font-bold">
+            {data?.currency} {data?.amount.toLocaleString()}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }

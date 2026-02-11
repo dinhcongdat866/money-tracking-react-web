@@ -55,7 +55,7 @@ export default function RecentTransactionsTable() {
             <Skeleton className="h-6 w-full" />
           </div>
         ) : isError ? (
-          <p className="text-sm text-destructive">Error loading recent transactions</p>
+          <p className="text-sm text-destructive">Failed to load recent transactions</p>
         ) : transactions.length === 0 ? (
           <p className="text-sm text-muted-foreground">No recent transactions.</p>
         ) : (
