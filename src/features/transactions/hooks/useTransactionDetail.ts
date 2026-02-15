@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTransactionDetail } from "../api/transactions-api";
 import type { TransactionItem } from "../types";
-import { transactionKeys } from "@/lib/query-keys";
+import { transactionKeys, STALE_TIME } from "@/lib/query-keys";
 import type { BaseQueryOptions, QueryKeyOf } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
 
@@ -20,7 +20,7 @@ export function useTransactionDetail(
     queryKey: transactionKeys.detail(id as string),
     queryFn: () => getTransactionDetail(id as string),
     enabled: Boolean(id),
-    staleTime: 0, // Financial data: always refetch from server
+    staleTime: STALE_TIME.MEDIUM,
     ...options,
   });
 }

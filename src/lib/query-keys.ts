@@ -10,6 +10,23 @@ import type { QueryClient } from "@tanstack/react-query";
  * - Refactor-safe code
  */
 
+export const STALE_TIME = {
+  /** Always fresh - refetch immediately (0ms) */
+  REALTIME: 0,
+  
+  /** Short cache - slightly stale OK (30s) */
+  SHORT: 30 * 1000,
+  
+  /** Medium cache - moderate staleness (1min) */
+  MEDIUM: 60 * 1000,
+  
+  /** Long cache - rarely changes (5min) */
+  LONG: 5 * 60 * 1000,
+  
+  /** Static - never expires (Infinity) */
+  STATIC: Infinity,
+} as const;
+
 // ============================================================================
 // TRANSACTIONS
 // ============================================================================

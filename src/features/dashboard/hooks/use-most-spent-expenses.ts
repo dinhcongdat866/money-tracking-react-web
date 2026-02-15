@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMostSpentExpenses } from "../api/dashboard-api";
 import { TimeRange, type CategoryExpense } from "../types";
-import { analyticsKeys } from "@/lib/query-keys";
+import { analyticsKeys, STALE_TIME } from "@/lib/query-keys";
 import type { BaseQueryOptions, QueryKeyOf } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
 
@@ -18,8 +18,8 @@ export function useMostSpentExpenses(
   return useQuery<CategoryExpense[], ApiError, CategoryExpense[], QueryKeyOf<typeof analyticsKeys.mostSpentExpenses>>({
     queryKey: analyticsKeys.mostSpentExpenses(timeRange, limit),
     queryFn: () => getMostSpentExpenses(timeRange, limit),
-    staleTime: 1000 * 60 * 60 * 1, // 1 hour
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
+    staleTime: STALE_TIME.SHORT,
+    placeholderData: (previousData) => previousData,
     ...options,
   });
 }

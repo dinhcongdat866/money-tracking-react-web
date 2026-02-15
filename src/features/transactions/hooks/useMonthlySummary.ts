@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMonthlySummaryApi } from "../api/transactions-api";
 import type { MonthlySummary } from "../types";
-import { transactionKeys } from "@/lib/query-keys";
+import { transactionKeys, STALE_TIME } from "@/lib/query-keys";
 import type { BaseQueryOptions, QueryKeyOf } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
 
@@ -25,8 +25,8 @@ export function useMonthlySummary(
     queryKey: transactionKeys.monthlySummary(month),
     queryFn: () => getMonthlySummaryApi(month),
     enabled: Boolean(month),
-    staleTime: 0, // Always refetch for financial summary
-    placeholderData: (previousData) => previousData, // Keep previous summary while fetching new month
+    staleTime: STALE_TIME.REALTIME,
+    placeholderData: (previousData) => previousData,
     ...options,
   });
 }

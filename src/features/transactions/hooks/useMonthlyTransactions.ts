@@ -3,7 +3,7 @@ import {
   getMonthlyTransactions,
   type PaginatedTransactionsResponse,
 } from "../api/transactions-api";
-import { transactionKeys } from "@/lib/query-keys";
+import { transactionKeys, STALE_TIME } from "@/lib/query-keys";
 import type { SimpleInfiniteQueryOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
 
@@ -23,8 +23,8 @@ export function useMonthlyTransactions(
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: Boolean(month),
-    staleTime: 0, // Financial data: always refetch from server
-    placeholderData: (previousData) => previousData, // Keep previous month data while fetching new month
+    staleTime: STALE_TIME.REALTIME,
+    placeholderData: (previousData) => previousData,
     ...options,
   });
 }
