@@ -10,6 +10,52 @@ export type UseSummaryOptions = BaseQueryOptions<
   QueryKeyOf<typeof financialKeys.summary>
 >;
 
+/**
+ * Hook for fetching financial summary data for the dashboard
+ * 
+ * @description
+ * Fetches aggregated financial summary (total income, expenses, etc.) for a given time range:
+ * - Short stale time (30s)
+ * - Placeholder data to prevent UI flicker during refetch
+ * - Supports multiple time ranges (TODAY, WEEK, MONTH, YEAR)
+ * - Automatically invalidated when transactions change
+ * 
+ * @example
+ * ```tsx
+ * const { data, isLoading } = useSummary(TimeRange.MONTH);
+ * 
+ * if (isLoading) return <Skeleton />;
+ * 
+ * return (
+ *   <div>
+ *     <p>Income: ${data.totalIncome}</p>
+ *     <p>Expenses: ${data.totalExpense}</p>
+ *     <p>Net: ${data.totalIncome - data.totalExpense}</p>
+ *   </div>
+ * );
+ * ```
+ * 
+ * @example With time range selector
+ * ```tsx
+ * const [range, setRange] = useState(TimeRange.MONTH);
+ * const { data } = useSummary(range);
+ * 
+ * return (
+ *   <>
+ *     <select value={range} onChange={e => setRange(e.target.value)}>
+ *       <option value={TimeRange.WEEK}>This Week</option>
+ *       <option value={TimeRange.MONTH}>This Month</option>
+ *       <option value={TimeRange.YEAR}>This Year</option>
+ *     </select>
+ *     <SummaryCard data={data} />
+ *   </>
+ * );
+ * ```
+ * 
+ * @param timeRange - Time range for the summary (TODAY, WEEK, MONTH, YEAR)
+ * @param options - Optional query configuration
+ * @returns React Query query object with summary data
+ */
 export function useSummary(
   timeRange: TimeRange,
   options?: UseSummaryOptions,

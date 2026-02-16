@@ -12,6 +12,36 @@ export type UseTransactionDetailOptions = BaseQueryOptions<
   DetailQueryKey
 >;
 
+/**
+ * Hook for fetching a single transaction's details
+ * 
+ * @description
+ * Fetches detailed information about a specific transaction. Features:
+ * - Only fetches when ID is provided
+ * - Medium stale time (1 minute)
+ * - Automatic refetch when ID changes
+ * 
+ * @example
+ * ```tsx
+ * const { data, isLoading, isError } = useTransactionDetail("tx-123");
+ * 
+ * if (isLoading) return <Skeleton />;
+ * if (isError) return <Error />;
+ * if (!data) return null;
+ * 
+ * return <TransactionCard transaction={data} />;
+ * ```
+ * 
+ * @example Conditional fetching
+ * ```tsx
+ * // Won't fetch when id is undefined
+ * const { data } = useTransactionDetail(selectedId);
+ * ```
+ * 
+ * @param id - The transaction ID to fetch (won't fetch if undefined)
+ * @param options - Optional query configuration
+ * @returns React Query query object with data, isLoading, isError, etc.
+ */
 export function useTransactionDetail(
   id: string | undefined,
   options?: UseTransactionDetailOptions,

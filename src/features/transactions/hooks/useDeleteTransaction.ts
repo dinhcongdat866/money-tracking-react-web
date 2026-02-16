@@ -27,6 +27,51 @@ export type UseDeleteTransactionOptions = BaseMutationOptions<
   DeleteTransactionContext
 >;
 
+/**
+ * Hook for deleting a transaction with optimistic updates
+ * 
+ * @description
+ * Handles transaction deletion with intelligent optimistic updates:
+ * - Immediately removes the transaction from all cached lists
+ * - Rolls back if the API call fails
+ * - Shows toast notifications for success/error
+ * - Invalidates related queries
+ * - Only invalidates the specific month that was affected
+ * 
+ * @example
+ * ```tsx
+ * const { mutate, isPending } = useDeleteTransaction();
+ * 
+ * const handleDelete = () => {
+ *   if (confirm("Delete this transaction?")) {
+ *     mutate("tx-123");
+ *   }
+ * };
+ * 
+ * return (
+ *   <button onClick={handleDelete} disabled={isPending}>
+ *     {isPending ? "Deleting..." : "Delete"}
+ *   </button>
+ * );
+ * ```
+ * 
+ * @example With async/await
+ * ```tsx
+ * const { mutateAsync } = useDeleteTransaction();
+ * 
+ * const handleDelete = async (id: string) => {
+ *   try {
+ *     await mutateAsync(id);
+ *     router.push("/transactions");
+ *   } catch (error) {
+ *     console.error("Failed to delete:", error);
+ *   }
+ * };
+ * ```
+ * 
+ * @param options - Optional mutation configuration
+ * @returns React Query mutation object with mutate, mutateAsync, isPending, etc.
+ */
 export function useDeleteTransaction(
   options?: UseDeleteTransactionOptions,
 ) {

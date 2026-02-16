@@ -29,6 +29,56 @@ export type UseCreateTransactionOptions = BaseMutationOptions<
   CreateTransactionContext
 >;
 
+/**
+ * Hook for creating a new transaction with optimistic updates
+ * 
+ * @description
+ * This hook handles transaction creation with smart optimistic updates:
+ * - Immediately adds the transaction to the UI (optimistic update)
+ * - Only updates the specific month's cache (not all months)
+ * - Rolls back on error
+ * - Shows toast notifications for success/error
+ * - Invalidates related queries after completion
+ * 
+ * @example
+ * ```tsx
+ * const { mutate, isPending } = useCreateTransaction();
+ * 
+ * const handleSubmit = () => {
+ *   mutate({
+ *     amount: 100,
+ *     type: "expense",
+ *     categoryId: "food",
+ *     categoryName: "Food",
+ *     date: new Date().toISOString(),
+ *     note: "Lunch",
+ *   });
+ * };
+ * ```
+ * 
+ * @example With async/await
+ * ```tsx
+ * const { mutateAsync } = useCreateTransaction();
+ * 
+ * const handleSubmit = async () => {
+ *   try {
+ *     const transaction = await mutateAsync({
+ *       amount: 100,
+ *       type: "expense",
+ *       categoryId: "food",
+ *       categoryName: "Food",
+ *       date: new Date().toISOString(),
+ *     });
+ *     console.log("Created:", transaction.id);
+ *   } catch (error) {
+ *     console.error("Failed:", error);
+ *   }
+ * };
+ * ```
+ * 
+ * @param options - Optional mutation configuration (onSuccess, onError, etc.)
+ * @returns React Query mutation object with mutate, mutateAsync, isPending, etc.
+ */
 export function useCreateTransaction(
   options?: UseCreateTransactionOptions,
 ) {
