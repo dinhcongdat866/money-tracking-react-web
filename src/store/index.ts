@@ -1,8 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import type { Action, ThunkAction } from '@reduxjs/toolkit';
+import authReducer from './slices/auth/authSlice';
+import { persistMiddleware } from './middleware/persistMiddleware';
+import { sessionMiddleware } from './middleware/sessionMiddleware';
 
 export const store = configureStore({
-  reducer: {},
+  reducer: {
+    auth: authReducer,
+  },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -10,7 +15,7 @@ export const store = configureStore({
         ignoredActions: ['filters/setDateRange'],
         ignoredPaths: ['filters.startDate', 'filters.endDate'],
       },
-    }),
+    }).concat(sessionMiddleware, persistMiddleware),
   devTools: process.env.NODE_ENV !== 'production' && {
     name: 'Money Tracking App',
     trace: true,

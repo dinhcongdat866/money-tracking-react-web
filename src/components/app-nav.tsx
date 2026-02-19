@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { logout } from "@/app/login/actions";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectUser, selectUserDisplayName } from "@/store/slices/auth/authSelectors";
+import { logoutThunk } from "@/store/slices/auth/authThunks";
+import { useAuthSync } from "@/hooks/useAuthSync";
 
 const links = [
   { href: "/", label: "Home" },
@@ -16,10 +19,25 @@ type AppNavProps = {
   userEmail?: string | null;
 };
 
-export function AppNav({ userEmail }: AppNavProps) {
+export function AppNav({ userEmail: serverUserEmail }: AppNavProps) {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const pathname = usePathname();
-
+  
+  // Sync server session (source of truth) to Redux on mount
+  useAuthSync({ 
+    serverUser: serverUserEmail ? { email: serverUserEmail } : null 
+  });
+  
+  const user = useAppSelector(selectUser);
+  const displayName = useAppSelector(selectUserDisplayName);
+  
   const isLoginPage = pathname === "/login";
+
+  const handleLogout = async () => {
+    await dispatch(logoutThunk());
+    router.push('/login');
+  };
 
   return (
     <header className="border-b bg-background/80 backdrop-blur">
@@ -28,9 +46,9 @@ export function AppNav({ userEmail }: AppNavProps) {
           <span className="text-sm font-semibold tracking-tight">
             Money Tracker
           </span>
-          {!!userEmail && !isLoginPage && (
+          {!!user && !isLoginPage && (
             <span className="text-xs text-muted-foreground">
-              Signed in as <span className="font-medium">{userEmail}</span>
+              Signed in as <span className="font-medium">{displayName}</span>
             </span>
           )}
         </div>
@@ -59,12 +77,14 @@ export function AppNav({ userEmail }: AppNavProps) {
             })}
           </nav>
 
-          {!isLoginPage && (
-            <form action={logout}>
-              <Button type="submit" variant="outline" size="sm">
-                Logout
-              </Button>
-            </form>
+          {!isLoginPage && user && (
+            <Button 
+              onClick={handleLogout} 
+              variant="outline" 
+              size="sm"
+            >
+              Logout
+            </Button>
           )}
         </div>
       </div>
