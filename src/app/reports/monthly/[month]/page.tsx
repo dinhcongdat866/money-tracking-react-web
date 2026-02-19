@@ -1,6 +1,6 @@
 import type { TransactionItem } from "@/features/transactions/types";
 
-export const revalidate = 60 * 60 * 24; // ISR: regenerate every 24 hours
+export const revalidate = 86400; // ISR: regenerate every 24 hours (60 * 60 * 24)
 
 type PageProps = {
   params: { month: string };

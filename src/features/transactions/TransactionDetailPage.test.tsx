@@ -59,7 +59,7 @@ describe("TransactionDetailPage", () => {
     render(<TransactionDetailPage id="tx-1" />);
 
     expect(
-      screen.getByText(/Transaction not found/i),
+      screen.getByText(/Failed to load transaction/i),
     ).toBeInTheDocument();
   });
 
