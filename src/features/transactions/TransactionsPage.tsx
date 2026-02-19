@@ -18,6 +18,17 @@ import { useIsMutating } from "@tanstack/react-query";
 import { usePrefetchNextMonth } from "./hooks/usePrefetchNextMonth";
 import { ReactQueryErrorBoundary } from "@/components/ReactQueryErrorBoundary";
 import { ErrorBoundaryTestButton } from "@/components/ErrorBoundaryTestButton";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { 
+  openAddTransactionModal, 
+  closeAddTransactionModal,
+  openEditTransactionModal,
+  closeEditTransactionModal,
+} from "@/store/slices/ui/uiSlice";
+import { 
+  selectIsAddTransactionModalOpen,
+  selectEditingTransaction,
+} from "@/store/slices/ui/uiSelectors";
 
 function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -43,8 +54,11 @@ function getRecentMonthKeys(count: number = 3): string[] {
 export default function TransactionsPage() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(now));
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
+  
+  const dispatch = useAppDispatch();
+  const isAddModalOpen = useAppSelector(selectIsAddTransactionModalOpen);
+  const editingTransaction = useAppSelector(selectEditingTransaction);
+  
   const deleteMutation = useDeleteTransaction();
   const {
     data,
@@ -68,8 +82,14 @@ export default function TransactionsPage() {
   const availableMonths = useMemo(() => getRecentMonthKeys(3), []);
 
   const handleEdit = (transaction: TransactionItem) => {
-    setEditingTransaction(transaction);
-    setIsAddModalOpen(true);
+    dispatch(openEditTransactionModal({
+      id: transaction.id,
+      amount: transaction.amount,
+      type: transaction.type,
+      category: transaction.category,
+      date: transaction.date,
+      note: transaction.note,
+    }));
   };
 
   const handleDelete = async (transaction: TransactionItem) => {
@@ -84,9 +104,12 @@ export default function TransactionsPage() {
   };
 
   const handleModalClose = (open: boolean) => {
-    setIsAddModalOpen(open);
     if (!open) {
-      setEditingTransaction(null);
+      if (editingTransaction) {
+        dispatch(closeEditTransactionModal());
+      } else {
+        dispatch(closeAddTransactionModal());
+      }
     }
   };
 
@@ -176,7 +199,7 @@ export default function TransactionsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
           <div className="flex items-center gap-2">
             <ErrorBoundaryTestButton />
-            <Button onClick={() => setIsAddModalOpen(true)}>
+            <Button onClick={() => dispatch(openAddTransactionModal())}>
               <Plus className="h-4 w-4 mr-2" />
               Add Transaction
             </Button>
