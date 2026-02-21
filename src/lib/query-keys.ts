@@ -54,6 +54,21 @@ export const transactionKeys = {
   recent: () =>
     [...transactionKeys.all, 'recent'] as const,
 
+  /** All category queries (for Kanban board) */
+  categories: () => [...transactionKeys.all, 'category'] as const,
+
+  /** Transactions by category query (for Kanban columns) */
+  byCategory: (category: string, filters?: { month?: string; limit?: number }) =>
+    filters
+      ? [...transactionKeys.categories(), category, filters] as const
+      : [...transactionKeys.categories(), category] as const,
+
+  /** All transactions with infinite scroll (for Kanban board with all categories) */
+  infinite: (filters?: { month?: string; category?: string; search?: string }) =>
+    filters
+      ? [...transactionKeys.all, 'infinite', filters] as const
+      : [...transactionKeys.all, 'infinite'] as const,
+
   /** All detail queries */
   details: () => [...transactionKeys.all, 'detail'] as const,
 
@@ -111,6 +126,22 @@ export const analyticsKeys = {
  */
 export function invalidateAllTransactions(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+}
+
+/**
+ * Invalidate specific category query (for Kanban column updates)
+ */
+export function invalidateCategory(queryClient: QueryClient, category: string) {
+  return queryClient.invalidateQueries({ queryKey: transactionKeys.byCategory(category) });
+}
+
+/**
+ * Invalidate multiple categories (for drag & drop between columns)
+ */
+export function invalidateCategories(queryClient: QueryClient, categories: string[]) {
+  return Promise.all(
+    categories.map(category => invalidateCategory(queryClient, category))
+  );
 }
 
 /**

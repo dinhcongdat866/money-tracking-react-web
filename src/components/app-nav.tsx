@@ -12,6 +12,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
+  { href: "/transactions/kanban", label: "Kanban" },
   { href: "/reports/monthly", label: "Monthly Reports" },
 ];
 
