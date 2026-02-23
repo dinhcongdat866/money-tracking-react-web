@@ -1,6 +1,7 @@
 'use client';
 
-import { TransactionCard } from './TransactionCard';
+import { useDroppable } from '@dnd-kit/core';
+import { VirtualizedCardList } from './VirtualizedCardList';
 import type { CategoryConfig } from '../types';
 import type { TransactionItem } from '@/features/transactions/types';
 
@@ -9,18 +10,20 @@ type KanbanColumnProps = {
   transactions: TransactionItem[];
   total: number;
   count: number;
+  highlightedId?: string | null;
 };
 
 /**
- * Kanban Column Component
+ * Kanban Column Component (Droppable)
  * 
  * Represents a single category/stage column in the Kanban board.
  * Similar to a pipeline stage column in the interview problem.
  * 
  * Features:
  * - Category header with icon and total
- * - Scrollable transaction list (will be virtualized later)
+ * - Virtualized transaction list
  * - Drop zone for drag & drop
+ * - Visual feedback when dragging over
  * - Empty state
  */
 export function KanbanColumn({
@@ -28,7 +31,15 @@ export function KanbanColumn({
   transactions,
   total,
   count,
+  highlightedId,
 }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `column-${category.id}`,
+    data: {
+      category: category.id,
+    },
+  });
+
   return (
     <div className="flex flex-col w-[320px] flex-shrink-0">
       {/* Column Header */}
@@ -52,34 +63,39 @@ export function KanbanColumn({
         </div>
       </div>
 
-      {/* Transaction List Container */}
-      <div className="flex-1 border-x-2 border-b-2 border-gray-200 rounded-b-lg bg-gray-50 overflow-hidden">
-        {/* Scrollable content area (will be virtualized) */}
-        <div className="h-[calc(100vh-380px)] overflow-y-auto p-2">
-          {transactions.length === 0 ? (
-            <EmptyState categoryName={category.name} />
-          ) : (
-            <div className="space-y-2">
-              {transactions.map(transaction => (
-                <TransactionCard
-                  key={transaction.id}
-                  transaction={transaction}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Transaction List Container (Droppable) */}
+      <div
+        ref={setNodeRef}
+        className={`flex-1 border-x-2 border-b-2 rounded-b-lg overflow-hidden transition-colors ${
+          isOver
+            ? 'border-blue-400 bg-blue-50'
+            : 'border-gray-200 bg-gray-50'
+        }`}
+      >
+        {transactions.length === 0 ? (
+          <div className="h-[calc(100vh-380px)] flex items-center justify-center">
+            <EmptyState categoryName={category.name} isOver={isOver} />
+          </div>
+        ) : (
+          <VirtualizedCardList
+            transactions={transactions}
+            category={category.id}
+            highlightedId={highlightedId}
+          />
+        )}
       </div>
     </div>
   );
 }
 
-function EmptyState({ categoryName }: { categoryName: string }) {
+function EmptyState({ categoryName, isOver }: { categoryName: string; isOver: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-8">
-      <div className="text-6xl mb-4 opacity-30">📭</div>
+      <div className={`text-6xl mb-4 transition-all ${isOver ? 'opacity-100 scale-110' : 'opacity-30'}`}>
+        {isOver ? '📥' : '📭'}
+      </div>
       <p className="text-sm text-muted-foreground">
-        No transactions in {categoryName}
+        {isOver ? 'Drop here!' : `No transactions in ${categoryName}`}
       </p>
       <p className="text-xs text-muted-foreground mt-1">
         Drag transactions here to categorize them

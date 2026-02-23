@@ -1,32 +1,65 @@
 'use client';
 
 import { format, parseISO } from 'date-fns';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import type { TransactionItem } from '@/features/transactions/types';
 
 type TransactionCardProps = {
   transaction: TransactionItem;
+  isDragging?: boolean;
+  isHighlighted?: boolean;
 };
 
 /**
- * Transaction Card Component
+ * Transaction Card Component (Draggable)
  * 
  * Draggable card representing a single transaction in the Kanban board.
  * Similar to a candidate card in the interview problem.
  * 
  * Features:
+ * - Draggable with @dnd-kit
  * - Amount and type (income/expense)
  * - Date
  * - Optional note
  * - Category badge
- * - Hover effects
- * - Will be draggable in next phase
+ * - Visual feedback during drag
  */
-export function TransactionCard({ transaction }: TransactionCardProps) {
+export function TransactionCard({ transaction, isDragging = false, isHighlighted = false }: TransactionCardProps) {
   const isIncome = transaction.type === 'income';
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging: isCurrentlyDragging,
+  } = useDraggable({
+    id: transaction.id,
+    data: {
+      transaction,
+      sourceCategory: transaction.category.id,
+    },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isCurrentlyDragging ? 0 : 1, // Hide original card when dragging
+    cursor: isCurrentlyDragging ? 'grabbing' : 'grab',
+    transition: isCurrentlyDragging ? 'none' : 'opacity 150ms ease-in', // Smooth fade-in when appearing in new position
+  };
 
   return (
     <div
-      className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition-all ${
+        isHighlighted 
+          ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg animate-pulse' 
+          : 'border-gray-200'
+      }`}
     >
       {/* Amount */}
       <div className="flex items-center justify-between mb-2">
