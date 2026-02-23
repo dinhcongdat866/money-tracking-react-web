@@ -108,7 +108,7 @@ export function validatePagination(
 ): { page: number; limit: number } {
   const validatedPage = page && page > 0 ? page : 1;
   const validatedLimit =
-    limit && limit > 0 && limit <= 100 ? limit : 20;
+    limit && limit > 0 && limit <= 5000 ? limit : 20;
 
   return { page: validatedPage, limit: validatedLimit };
 }

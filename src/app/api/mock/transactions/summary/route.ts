@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllTransactions, getMonthKey } from "../mock-data";
+import { getMonthlySummary } from "@/lib/mock-data/mock-data-service";
 import type { MonthlySummary } from "@/features/transactions/types";
 
 function delay(ms: number) {
@@ -17,63 +17,30 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Simulate network latency so loaders are visible
-  await delay(1000);
+  // Simulate network latency
+  await delay(300);
 
-  const allTransactions = getAllTransactions();
-  const filtered = allTransactions.filter(
-    (t) => getMonthKey(new Date(t.date)) === month,
-  );
+  const summary = getMonthlySummary(month);
+  
+  // Format month label
+  const [year, m] = month.split("-").map(Number);
+  const label = new Date(
+    year,
+    (m ?? 1) - 1,
+    1,
+  ).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
 
-  let summary: MonthlySummary;
+  const result: MonthlySummary = {
+    month: label,
+    totalBefore: summary.totalBefore,
+    totalAfter: summary.totalAfter,
+    difference: summary.difference,
+  };
 
-  if (filtered.length === 0) {
-    const [year, m] = month.split("-").map(Number);
-    const label = new Date(
-      year,
-      (m ?? 1) - 1,
-      1,
-    ).toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
-    summary = {
-      month: label,
-      totalBefore: 0,
-      totalAfter: 0,
-      difference: 0,
-    };
-  } else {
-    const totalIncome = filtered
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const totalExpense = filtered
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const before = totalIncome; // mock rule: before = income
-    const after = totalIncome - totalExpense;
-    const difference = after - before;
-
-    const [year, m] = month.split("-").map(Number);
-    const label = new Date(
-      year,
-      (m ?? 1) - 1,
-      1,
-    ).toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
-
-    summary = {
-      month: label,
-      totalBefore: before,
-      totalAfter: after,
-      difference,
-    };
-  }
-
-  return NextResponse.json(summary);
+  return NextResponse.json(result);
 }
 
 
