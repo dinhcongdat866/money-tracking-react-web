@@ -11,6 +11,9 @@ type KanbanColumnProps = {
   total: number;
   count: number;
   highlightedId?: string | null;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
 };
 
 /**
@@ -21,10 +24,11 @@ type KanbanColumnProps = {
  * 
  * Features:
  * - Category header with icon and total
- * - Virtualized transaction list
+ * - Virtualized transaction list with infinite scroll
  * - Drop zone for drag & drop
  * - Visual feedback when dragging over
  * - Empty state
+ * - Background loading indicator
  */
 export function KanbanColumn({
   category,
@@ -32,6 +36,9 @@ export function KanbanColumn({
   total,
   count,
   highlightedId,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${category.id}`,
@@ -81,6 +88,9 @@ export function KanbanColumn({
             transactions={transactions}
             category={category.id}
             highlightedId={highlightedId}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
           />
         )}
       </div>

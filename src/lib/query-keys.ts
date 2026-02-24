@@ -69,6 +69,13 @@ export const transactionKeys = {
       ? [...transactionKeys.all, 'infinite', filters] as const
       : [...transactionKeys.all, 'infinite'] as const,
 
+  /** All Kanban queries */
+  kanban: () => [...transactionKeys.all, 'kanban'] as const,
+
+  /** Kanban column with infinite scroll (cursor-based pagination) */
+  kanbanColumn: (category: string, filters: { month: string; type?: string; search?: string }) =>
+    [...transactionKeys.kanban(), category, filters] as const,
+
   /** All detail queries */
   details: () => [...transactionKeys.all, 'detail'] as const,
 
@@ -142,6 +149,26 @@ export function invalidateCategories(queryClient: QueryClient, categories: strin
   return Promise.all(
     categories.map(category => invalidateCategory(queryClient, category))
   );
+}
+
+/**
+ * Invalidate all Kanban queries
+ */
+export function invalidateAllKanban(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: transactionKeys.kanban() });
+}
+
+/**
+ * Invalidate specific Kanban column query
+ */
+export function invalidateKanbanColumn(
+  queryClient: QueryClient,
+  category: string,
+  filters: { month: string; type?: string; search?: string }
+) {
+  return queryClient.invalidateQueries({ 
+    queryKey: transactionKeys.kanbanColumn(category, filters) 
+  });
 }
 
 /**

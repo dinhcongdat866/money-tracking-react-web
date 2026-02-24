@@ -107,3 +107,36 @@ export type KanbanFilters = {
   search?: string;
   type?: 'income' | 'expense' | 'all';
 };
+
+/**
+ * Cursor-based Pagination Response
+ * 
+ * Professional pagination structure for infinite scroll.
+ * Aligned with hiring pipeline interview problem.
+ */
+export type KanbanPaginatedResponse = {
+  items: TransactionItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  total: number;              // Total count of transactions
+  categoryTotal: number;      // Net total (income - expense)
+  totalIncome: number;        // Total income in this category
+  totalExpenses: number;      // Total expenses in this category
+  
+  pagination: {
+    limit: number;
+    currentCount: number;
+    totalAvailable: number;
+  };
+};
+
+/**
+ * Infinite Query Page Param
+ */
+export type KanbanPageParam = {
+  cursor?: string;
+  category: string;
+  month: string;
+  type?: 'income' | 'expense' | 'all';
+  search?: string;
+};
