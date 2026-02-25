@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMonthlySummary } from "@/lib/mock-data/mock-data-service";
+import { getAllTransactions } from "../mock-data";
 import type { MonthlySummary } from "@/features/transactions/types";
 
 function delay(ms: number) {
@@ -17,12 +17,21 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Simulate network latency
   await delay(300);
 
-  const summary = getMonthlySummary(month);
+  const allTransactions = getAllTransactions();
+  const monthTransactions = allTransactions.filter(t => t.date.startsWith(month));
   
-  // Format month label
+  const income = monthTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const expenses = monthTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const difference = income - expenses;
+  
   const [year, m] = month.split("-").map(Number);
   const label = new Date(
     year,
@@ -35,9 +44,9 @@ export async function GET(req: NextRequest) {
 
   const result: MonthlySummary = {
     month: label,
-    totalBefore: summary.totalBefore,
-    totalAfter: summary.totalAfter,
-    difference: summary.difference,
+    totalBefore: 0,
+    totalAfter: difference,
+    difference,
   };
 
   return NextResponse.json(result);

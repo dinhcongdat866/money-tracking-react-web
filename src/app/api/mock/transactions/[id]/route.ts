@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTransactionById } from "@/lib/mock-data/mock-data-service";
+import { 
+  getTransactionById, 
+  updateTransaction 
+} from "../mock-data";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,18 +30,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const body = await req.json();
 
-    // For now: Just return optimistic update success
-    // In real app, this would persist to database
-    // In dev: Changes are lost on page refresh (expected for mock)
-    
     const tx = getTransactionById(id);
     if (!tx) {
       return new NextResponse("Not found", { status: 404 });
     }
 
-    // Return updated transaction
-    const updated = {
-      ...tx,
+    const updated = updateTransaction(id, {
       amount: body.amount,
       type: body.type,
       category: {
@@ -48,7 +45,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       },
       date: body.date,
       note: body.note,
-    };
+    });
+
+    if (!updated) {
+      return new NextResponse("Failed to update", { status: 500 });
+    }
 
     return NextResponse.json(updated);
   } catch {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTransactionsPaginated } from "@/lib/mock-data/mock-data-service";
+import { getAllTransactions } from "../transactions/mock-data";
 
 /**
  * Kanban API Route - Cursor-based Pagination
@@ -43,9 +43,15 @@ export async function GET(req: NextRequest) {
   // Simulate network latency (300ms - realistic API call)
   await delay(300);
 
-  // Get all transactions first (in real app, this would be a database query)
-  const allData = getTransactionsPaginated(1, 10000, { month });
-  let filteredTransactions = allData.items;
+  // Get all transactions from mutable mock storage
+  let filteredTransactions = getAllTransactions();
+
+  // Apply month filter
+  if (month) {
+    filteredTransactions = filteredTransactions.filter(
+      t => t.date.startsWith(month)
+    );
+  }
 
   // Apply filters
   if (category) {

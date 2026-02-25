@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTransactionsPaginated } from "@/lib/mock-data/mock-data-service";
+import { getAllTransactions, addTransaction } from "./mock-data";
 import type { TransactionItem } from "@/features/transactions/types";
 
 function delay(ms: number) {
@@ -12,13 +12,26 @@ export async function GET(req: NextRequest) {
   const page = Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1);
   const limit = Math.max(parseInt(searchParams.get("limit") ?? "20", 10), 1);
 
-  // Simulate network latency so loaders are visible
   await delay(300);
 
-  // Use mock data service
-  const result = getTransactionsPaginated(page, limit, { month });
-
-  return NextResponse.json(result);
+  let transactions = getAllTransactions();
+  
+  if (month) {
+    transactions = transactions.filter(t => t.date.startsWith(month));
+  }
+  
+  const total = transactions.length;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const items = transactions.slice(startIndex, endIndex);
+  
+  return NextResponse.json({
+    items,
+    page,
+    pageSize: limit,
+    total,
+    hasMore: endIndex < total,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -26,11 +39,7 @@ export async function POST(req: NextRequest) {
     await delay(300);
     const body = await req.json();
     
-    // Create new transaction
-    // In real app: Save to database
-    // In dev: Mock response (not persisted)
-    const transaction: TransactionItem = {
-      id: `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    const transaction = addTransaction({
       amount: body.amount,
       type: body.type,
       category: {
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest) {
       },
       date: body.date,
       note: body.note,
-    };
+    });
     
     return NextResponse.json(transaction, { status: 201 });
   } catch {
