@@ -25,7 +25,7 @@ export function LoginForm() {
     const result = await dispatch(loginThunk({ email, password }));
 
     if (loginThunk.fulfilled.match(result)) {
-      // Redirect on success
+      router.refresh();
       router.push('/dashboard');
     }
   };
