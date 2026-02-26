@@ -26,6 +26,7 @@ export function LoginForm() {
 
     if (loginThunk.fulfilled.match(result)) {
       // Redirect on success
+      router.refresh();
       router.push('/dashboard');
     }
   };
