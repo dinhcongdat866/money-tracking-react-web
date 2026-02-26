@@ -2,13 +2,14 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { AuthTokenPayload, verifyAuthToken } from "./auth-token";
-import { AUTH_COOKIE_NAME } from "./auth-constants";
+
+const AUTH_COOKIE = "auth";
 
 export async function getCurrentUser(): Promise<
   Pick<AuthTokenPayload, "sub" | "email"> | null
 > {
   const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  const token = cookieStore.get(AUTH_COOKIE)?.value;
   if (!token) return null;
 
   const payload = await verifyAuthToken(token);
@@ -21,7 +22,5 @@ export async function getCurrentUser(): Promise<
 }
 
 export function getAuthCookieName() {
-  return AUTH_COOKIE_NAME;
+  return AUTH_COOKIE;
 }
-
-
