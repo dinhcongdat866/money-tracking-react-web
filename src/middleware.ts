@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyAuthToken } from "@/lib/auth-token";
-import { getAuthCookieName } from "@/lib/auth";
+import { verifyAuthToken } from "@/lib/auth-token-core";
+import { AUTH_COOKIE_NAME } from "@/lib/auth-constants";
 
 export async function middleware(req: NextRequest) {
-  const cookieName = getAuthCookieName();
-  const token = req.cookies.get(cookieName)?.value;
+  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
 
   if (!token) {
     const loginUrl = new URL("/login", req.url);
@@ -25,5 +24,3 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: ["/dashboard", "/dashboard/:path*", "/transactions", "/transactions/:path*"],
 };
-
-
