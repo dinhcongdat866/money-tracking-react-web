@@ -143,6 +143,10 @@ class MockWebSocketServer {
       newCategory = categories[Math.floor(Math.random() * categories.length)];
     }
 
+    // Generate version for message ordering
+    const version = Date.now();
+    const updatedAt = Date.now();
+
     this.broadcast<TransactionMovedEvent>({
       type: WebSocketEventType.TRANSACTION_MOVED,
       data: {
@@ -158,6 +162,8 @@ class MockWebSocketServer {
             name: this.getCategoryName(newCategory),
             icon: this.getCategoryIcon(newCategory),
           },
+          version, // ✅ Version for ordering
+          updatedAt, // ✅ Timestamp for fallback
         },
         oldCategory,
         newCategory,
@@ -165,7 +171,7 @@ class MockWebSocketServer {
       },
     });
 
-    console.log(`✨ Simulated: ${transaction.note} moved from ${oldCategory} to ${newCategory}`);
+    console.log(`✨ Simulated: ${transaction.note} moved from ${oldCategory} to ${newCategory} (v${version})`);
   }
 
   private getCategoryName(categoryId: string): string {

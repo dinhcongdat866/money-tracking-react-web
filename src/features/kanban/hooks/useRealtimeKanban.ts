@@ -45,6 +45,10 @@ export function useRealtimeKanban(filters: KanbanFilters) {
   const broadcastManager = useRef(getBroadcastManager());
   const queuedUpdates = useRef<WebSocketEvent[]>([]);
   const processedEvents = useRef(new Map<string, number>());
+  const pendingTimeouts = useRef<NodeJS.Timeout[]>([]);
+  
+  // Track transaction versions for message ordering
+  const transactionVersions = useRef(new Map<string, number>());
 
   useEffect(() => {
     // Subscribe to WebSocket events
@@ -137,9 +141,69 @@ export function useRealtimeKanban(filters: KanbanFilters) {
     unsubscribers.push(unsubBroadcast);
 
     return () => {
+      // Cleanup all subscriptions
       unsubscribers.forEach(unsub => unsub());
+      
+      // Clear all pending timeouts to prevent memory leaks
+      pendingTimeouts.current.forEach(timeout => clearTimeout(timeout));
+      pendingTimeouts.current = [];
+      
+      // Clear processed events map
+      processedEvents.current.clear();
+      
+      // Clear transaction versions map
+      transactionVersions.current.clear();
     };
   }, [subscribe, filters.month, filters.type, filters.search]);
+
+  // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
+
+  /**
+   * Check if event is outdated based on version/timestamp
+   * Returns true if should DISCARD (outdated), false if should APPLY
+   */
+  const isOutdatedEvent = (transactionId: string, newVersion?: number, newTimestamp?: number): boolean => {
+    const currentVersion = transactionVersions.current.get(transactionId);
+    
+    // No version info → Apply (backward compatible)
+    if (!newVersion && !newTimestamp) {
+      return false;
+    }
+
+    // Version-based check (primary)
+    if (newVersion && currentVersion) {
+      if (newVersion <= currentVersion) {
+        console.warn(`[Realtime] Outdated event (version ${newVersion} <= ${currentVersion}), discarding`);
+        return true;
+      }
+    }
+
+    // Timestamp-based check (fallback)
+    if (newTimestamp && currentVersion) {
+      // If we have a version but new event doesn't, use timestamp
+      const currentTimestamp = transactionVersions.current.get(`${transactionId}-ts`);
+      if (currentTimestamp && newTimestamp <= currentTimestamp) {
+        console.warn(`[Realtime] Outdated event (timestamp ${newTimestamp} <= ${currentTimestamp}), discarding`);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  /**
+   * Update version tracking for transaction
+   */
+  const updateTransactionVersion = (transactionId: string, version?: number, timestamp?: number): void => {
+    if (version) {
+      transactionVersions.current.set(transactionId, version);
+    }
+    if (timestamp) {
+      transactionVersions.current.set(`${transactionId}-ts`, timestamp);
+    }
+  };
 
   // ============================================================================
   // EVENT HANDLERS
@@ -164,9 +228,16 @@ export function useRealtimeKanban(filters: KanbanFilters) {
     processedEvents.current.set(eventKey, now);
     
     // Cleanup old entries (keep map small)
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       processedEvents.current.delete(eventKey);
     }, 5000);
+    pendingTimeouts.current.push(timeoutId);
+
+    // ✅ VERSION CHECK: Discard outdated events
+    if (isOutdatedEvent(transaction.id, transaction.version, transaction.updatedAt)) {
+      console.log('[Realtime] Skipped outdated transaction:moved event');
+      return;
+    }
 
     // Check if transaction is currently being mutated
     if (isTransactionBeingMutated(transaction.id)) {
@@ -238,7 +309,13 @@ export function useRealtimeKanban(filters: KanbanFilters) {
       }
     );
 
-    console.log(`[Realtime] Transaction moved: ${oldCategory} → ${newCategory}`);
+    // Update version tracking
+    updateTransactionVersion(transaction.id, transaction.version, transaction.updatedAt);
+
+    console.log(`[Realtime] Transaction moved: ${oldCategory} → ${newCategory}`, {
+      version: transaction.version,
+      updatedAt: transaction.updatedAt,
+    });
   };
 
   /**
@@ -259,7 +336,11 @@ export function useRealtimeKanban(filters: KanbanFilters) {
     }
     
     processedEvents.current.set(eventKey, now);
-    setTimeout(() => processedEvents.current.delete(eventKey), 5000);
+    const timeoutId = setTimeout(() => processedEvents.current.delete(eventKey), 5000);
+    pendingTimeouts.current.push(timeoutId);
+
+    // ✅ VERSION CHECK: For created events, just track the version
+    // (No need to check outdated since it's a new item)
 
     const categoryKey = transactionKeys.kanbanColumn(categoryId, {
       month: filters.month,
@@ -297,7 +378,13 @@ export function useRealtimeKanban(filters: KanbanFilters) {
       }
     );
 
-    console.log(`[Realtime] Transaction created in ${categoryId}`);
+    // Update version tracking
+    updateTransactionVersion(transaction.id, transaction.version, transaction.updatedAt);
+
+    console.log(`[Realtime] Transaction created in ${categoryId}`, {
+      id: transaction.id,
+      version: transaction.version,
+    });
   };
 
   /**
@@ -318,7 +405,14 @@ export function useRealtimeKanban(filters: KanbanFilters) {
     }
     
     processedEvents.current.set(eventKey, now);
-    setTimeout(() => processedEvents.current.delete(eventKey), 5000);
+    const timeoutId = setTimeout(() => processedEvents.current.delete(eventKey), 5000);
+    pendingTimeouts.current.push(timeoutId);
+
+    // ✅ VERSION CHECK: Critical for UPDATE events (most prone to ordering issues)
+    if (isOutdatedEvent(transaction.id, transaction.version, transaction.updatedAt)) {
+      console.log('[Realtime] Skipped outdated transaction:updated event');
+      return;
+    }
 
     const categoryKey = transactionKeys.kanbanColumn(categoryId, {
       month: filters.month,
@@ -344,7 +438,13 @@ export function useRealtimeKanban(filters: KanbanFilters) {
       }
     );
 
-    console.log(`[Realtime] Transaction updated: ${transaction.id}`);
+    // Update version tracking
+    updateTransactionVersion(transaction.id, transaction.version, transaction.updatedAt);
+
+    console.log(`[Realtime] Transaction updated: ${transaction.id}`, {
+      version: transaction.version,
+      updatedAt: transaction.updatedAt,
+    });
   };
 
   /**
@@ -364,7 +464,17 @@ export function useRealtimeKanban(filters: KanbanFilters) {
     }
     
     processedEvents.current.set(eventKey, now);
-    setTimeout(() => processedEvents.current.delete(eventKey), 5000);
+    const timeoutId = setTimeout(() => processedEvents.current.delete(eventKey), 5000);
+    pendingTimeouts.current.push(timeoutId);
+
+    // ✅ VERSION CHECK: For delete events
+    // Note: Delete events might not have version, but we check timestamp
+    const version = (event.data as any).version;
+    const timestamp = event.timestamp;
+    if (isOutdatedEvent(transactionId, version, timestamp)) {
+      console.log('[Realtime] Skipped outdated transaction:deleted event');
+      return;
+    }
 
     const categoryKey = transactionKeys.kanbanColumn(categoryId, {
       month: filters.month,
@@ -392,6 +502,10 @@ export function useRealtimeKanban(filters: KanbanFilters) {
         };
       }
     );
+
+    // Cleanup version tracking for deleted transaction
+    transactionVersions.current.delete(transactionId);
+    transactionVersions.current.delete(`${transactionId}-ts`);
 
     console.log(`[Realtime] Transaction deleted: ${transactionId}`);
   };

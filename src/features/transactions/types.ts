@@ -22,4 +22,6 @@ export type TransactionItem = {
     };
     date: string;
     note?: string;
+    version?: number; // For optimistic locking & message ordering
+    updatedAt?: number; // Timestamp for conflict resolution
 };

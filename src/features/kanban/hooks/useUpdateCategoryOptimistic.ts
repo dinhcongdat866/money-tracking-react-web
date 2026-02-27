@@ -65,6 +65,22 @@ export function useUpdateCategoryOptimistic() {
       transaction,
       filters 
     }: UpdateCategoryVariables) => {
+      // 0. Check for concurrent mutations on same transaction
+      const mutations = queryClient.getMutationCache().getAll();
+      const isAlreadyMutating = mutations.some(mutation => {
+        const variables = mutation.state.variables as any;
+        return (
+          variables?.transactionId === transactionId &&
+          mutation.state.status === 'pending' &&
+          mutation !== queryClient.getMutationCache().getAll().slice(-1)[0] // Not current mutation
+        );
+      });
+
+      if (isAlreadyMutating) {
+        console.warn('[Optimistic] Concurrent mutation detected, aborting:', transactionId);
+        throw new Error('Transaction is already being updated');
+      }
+
       // 1. Cancel outgoing refetches (prevent race conditions)
       await queryClient.cancelQueries({
         queryKey: transactionKeys.kanban(),
@@ -174,6 +190,10 @@ export function useUpdateCategoryOptimistic() {
     // PHASE 2: SUCCESS (broadcast to other tabs/devices)
     // ========================================================================
     onSuccess: (data, variables) => {
+      // Generate version for message ordering
+      const version = Date.now();
+      const updatedAt = Date.now();
+
       const updatedTransaction: TransactionItem = {
         ...variables.transaction,
         category: {
@@ -181,6 +201,8 @@ export function useUpdateCategoryOptimistic() {
           name: getCategoryName(variables.newCategory),
           icon: getCategoryIcon(variables.newCategory),
         },
+        version, // ✅ Version for ordering
+        updatedAt, // ✅ Timestamp for fallback
       };
 
       const event = {

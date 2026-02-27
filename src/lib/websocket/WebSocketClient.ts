@@ -95,6 +95,10 @@ export class WebSocketClient {
       if (this.config.debug) console.log('[WS] Sent:', fullEvent);
     } else {
       // Queue message for later
+      if (this.messageQueue.length >= 100) {
+        console.warn('[WS] Message queue full, dropping oldest message');
+        this.messageQueue.shift();
+      }
       if (this.config.debug) console.log('[WS] Queued (offline):', fullEvent);
       this.messageQueue.push(fullEvent);
     }
@@ -286,13 +290,17 @@ export class WebSocketClient {
     this.setStatus('reconnecting');
     
     // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
-    const delay = Math.min(
+    const baseDelay = Math.min(
       this.config.reconnectDelay * Math.pow(2, this.reconnectAttempts),
       30000
     );
 
+    // Add random jitter (0-25%) to prevent thundering herd
+    const jitter = Math.random() * baseDelay * 0.25;
+    const delay = baseDelay + jitter;
+
     if (this.config.debug) {
-      console.log(`[WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.config.reconnectAttempts})`);
+      console.log(`[WS] Reconnecting in ${Math.round(delay)}ms (attempt ${this.reconnectAttempts + 1}/${this.config.reconnectAttempts})`);
     }
 
     this.reconnectTimeout = setTimeout(() => {
