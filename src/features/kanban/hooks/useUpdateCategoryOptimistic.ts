@@ -3,6 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionKeys, invalidateAllFinancial } from '@/lib/query-keys';
 import { updateTransaction } from '@/features/transactions/api/transactions-api';
+import { useWebSocket } from '@/providers/WebSocketProvider';
+import { WebSocketEventType, type TransactionMovedEvent } from '@/lib/websocket/types';
+import { getBroadcastManager } from '@/lib/sync/BroadcastManager';
 import type { TransactionItem } from '@/features/transactions/types';
 import type { KanbanPaginatedResponse, KanbanFilters } from '../types';
 
@@ -37,6 +40,8 @@ type UpdateCategoryVariables = {
  */
 export function useUpdateCategoryOptimistic() {
   const queryClient = useQueryClient();
+  const { send, isConnected } = useWebSocket();
+  const broadcastManager = getBroadcastManager();
 
   return useMutation({
     mutationFn: async ({ transactionId, newCategory, transaction }: UpdateCategoryVariables) => {
@@ -166,7 +171,48 @@ export function useUpdateCategoryOptimistic() {
     },
 
     // ========================================================================
-    // PHASE 2: ERROR HANDLING (rollback on failure)
+    // PHASE 2: SUCCESS (broadcast to other tabs/devices)
+    // ========================================================================
+    onSuccess: (data, variables) => {
+      const updatedTransaction: TransactionItem = {
+        ...variables.transaction,
+        category: {
+          id: variables.newCategory,
+          name: getCategoryName(variables.newCategory),
+          icon: getCategoryIcon(variables.newCategory),
+        },
+      };
+
+      const event = {
+        type: WebSocketEventType.TRANSACTION_MOVED,
+        data: {
+          transactionId: variables.transactionId,
+          transaction: updatedTransaction,
+          oldCategory: variables.oldCategory,
+          newCategory: variables.newCategory,
+          timestamp: Date.now(),
+        },
+      };
+
+      // Broadcast via WebSocket (if leader and connected)
+      if (broadcastManager.isLeaderTab() && isConnected) {
+        send<TransactionMovedEvent>(event);
+        console.log('[Optimistic] WebSocket event sent:', variables.transactionId);
+      }
+
+      // Always broadcast via BroadcastChannel (for multi-tab sync)
+      // Mark as local event to prevent echo broadcasting when WebSocket confirms
+      broadcastManager.broadcastEvent({
+        id: generateEventId(),
+        timestamp: Date.now(),
+        ...event,
+      }, true);
+
+      console.log('[Optimistic] Broadcasted to other tabs (local event)');
+    },
+
+    // ========================================================================
+    // PHASE 3: ERROR HANDLING (rollback on failure)
     // ========================================================================
     onError: (error, variables, context) => {
       console.error('Failed to update category:', error);
@@ -185,7 +231,7 @@ export function useUpdateCategoryOptimistic() {
     },
 
     // ========================================================================
-    // PHASE 3: SETTLED (refetch to sync with server)
+    // PHASE 4: SETTLED (refetch to sync with server)
     // ========================================================================
     onSettled: (data, error, variables) => {
       // Invalidate affected queries to refetch server state
@@ -251,4 +297,8 @@ function getCategoryIcon(categoryId: string): string {
     other: '❓',
   };
   return iconMap[categoryId] || '❓';
+}
+
+function generateEventId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }

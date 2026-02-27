@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ReactNode, useState } from "react";
 import { ToastProvider } from "./ToastProvider";
+import { WebSocketProvider } from "@/providers/WebSocketProvider";
 import {
   ApiError,
   NetworkError,
@@ -60,8 +61,10 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      <WebSocketProvider>
+        <ToastProvider>{children}</ToastProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </WebSocketProvider>
     </QueryClientProvider>
   );
 }

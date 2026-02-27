@@ -18,9 +18,11 @@ import { KanbanFilters } from './KanbanFilters';
 import { TransactionCard } from './TransactionCard';
 import { useKanbanColumns } from '../hooks/useKanbanColumn';
 import { useUpdateCategoryOptimistic } from '../hooks/useUpdateCategoryOptimistic';
+import { useRealtimeKanban } from '../hooks/useRealtimeKanban';
 import { TRANSACTION_CATEGORIES } from '../types';
 import type { KanbanFilters as FilterType } from '../types';
 import type { TransactionItem } from '@/features/transactions/types';
+import { ConnectionStatus } from '@/components/ConnectionStatus';
 
 /**
  * Professional Kanban Board Component
@@ -65,6 +67,9 @@ export function KanbanBoard() {
   
   // Optimistic update mutation for drag & drop
   const updateCategory = useUpdateCategoryOptimistic();
+
+  // 🔥 Real-time sync with WebSocket
+  useRealtimeKanban(filters);
 
   // Drag & drop sensors
   const sensors = useSensors(
@@ -137,6 +142,9 @@ export function KanbanBoard() {
       onDragEnd={handleDragEnd}
     >
       <div className="space-y-6">
+        {/* Connection Status */}
+        <ConnectionStatus />
+
         {/* Filters */}
         <KanbanFilters filters={filters} onFiltersChange={setFilters} />
 
