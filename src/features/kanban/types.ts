@@ -111,8 +111,7 @@ export type KanbanFilters = {
 /**
  * Cursor-based Pagination Response
  * 
- * Professional pagination structure for infinite scroll.
- * Aligned with hiring pipeline interview problem.
+ * Pagination structure for infinite scroll with category totals.
  */
 export type KanbanPaginatedResponse = {
   items: TransactionItem[];

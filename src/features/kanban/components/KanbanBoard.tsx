@@ -25,30 +25,18 @@ import type { TransactionItem } from '@/features/transactions/types';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
 
 /**
- * Professional Kanban Board Component
+ * Kanban Board for Transaction Management
  * 
- * High-performance Kanban board with infinite scroll and optimistic updates.
- * Inspired by hiring pipeline interview problem:
- * - Categories = Pipeline stages (Applied, Phone Screen, etc.)
- * - Transactions = Candidates
- * - Drag & drop = Moving candidates between stages
+ * High-performance drag-and-drop board with real-time sync.
  * 
- * Key Features (Professional-Grade):
+ * Features:
  * - Cursor-based infinite scroll (100 items/page)
- * - Handles 2000+ items per column without freezing
+ * - Handles 2000+ transactions per category
  * - Optimistic updates with automatic rollback
- * - Rate limiting (1-minute staleTime)
- * - Virtual scrolling (<100ms render target)
- * - Dynamic height support
- * - Infinite loading trigger at 80% scroll
- * - Background loading states
- * - Scroll position stability
- * 
- * Interview Points:
- * - useInfiniteQuery per column (independent loading)
- * - Cache synchronization across mutations
- * - Optimistic UI with rollback strategy
- * - Professional pagination patterns
+ * - Virtual scrolling for smooth 60 FPS performance
+ * - Real-time WebSocket synchronization
+ * - Multi-device and multi-tab sync
+ * - Smart caching with React Query
  */
 export function KanbanBoard() {
   const [filters, setFilters] = useState<FilterType>({
@@ -65,10 +53,10 @@ export function KanbanBoard() {
   // Fetch all columns with infinite scroll
   const { columns, summary, isLoading } = useKanbanColumns(categoryIds, filters);
   
-  // Optimistic update mutation for drag & drop
+  // Optimistic updates for instant UI feedback
   const updateCategory = useUpdateCategoryOptimistic();
 
-  // 🔥 Real-time sync with WebSocket
+  // Real-time sync across devices and tabs
   useRealtimeKanban(filters);
 
   // Drag & drop sensors

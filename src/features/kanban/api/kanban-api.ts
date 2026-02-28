@@ -1,8 +1,7 @@
 /**
  * Kanban API Client
  * 
- * Professional-grade API client for cursor-based infinite scroll.
- * Supports high-performance Kanban boards with 2000+ items per column.
+ * API client for cursor-based infinite scroll with 100 items per page.
  */
 
 import { transactionKeys } from '@/lib/query-keys';
@@ -13,14 +12,8 @@ import type { KanbanPaginatedResponse, KanbanPageParam } from '../types';
  * 
  * Uses cursor-based pagination for efficient infinite scroll.
  * 
- * @param params - Query parameters including cursor, category, filters
+ * @param params - Query parameters (cursor, category, month, type, search)
  * @returns Paginated response with items and next cursor
- * 
- * Interview points:
- * - Cursor-based pagination (more efficient than offset)
- * - 100 items per page (optimal for performance)
- * - Category-specific queries (load only visible column data)
- * - Search/filter support
  */
 export async function getKanbanColumnData(
   params: KanbanPageParam
@@ -28,7 +21,7 @@ export async function getKanbanColumnData(
   const searchParams = new URLSearchParams({
     category: params.category,
     month: params.month,
-    limit: '100', // Professional standard: 100 items per page
+    limit: '100',
   });
 
   // Add optional params
@@ -52,11 +45,9 @@ export async function getKanbanColumnData(
 }
 
 /**
- * Get query key for Kanban column infinite query
+ * Get query key for Kanban column
  * 
- * Uses centralized query key factory from @/lib/query-keys
- * Structured keys for easy cache invalidation:
- * ['transactions', 'kanban', category, { month, type, search }]
+ * Uses centralized query key factory for cache management.
  */
 export function getKanbanQueryKey(params: Omit<KanbanPageParam, 'cursor'>) {
   return transactionKeys.kanbanColumn(params.category, {

@@ -4,9 +4,8 @@
  * WebSocket Provider
  * 
  * Provides WebSocket connection to entire app via React Context.
- * Handles connection lifecycle and status management.
  * 
- * Interview Points:
+ * Features:
  * - Single WebSocket connection for entire app
  * - Automatic reconnection with exponential backoff
  * - Heartbeat to keep connection alive

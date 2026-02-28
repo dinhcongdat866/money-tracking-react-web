@@ -15,21 +15,18 @@ type UpdateCategoryVariables = {
 /**
  * Update Transaction Category with Optimistic Updates
  * 
- * Business Logic: Re-categorize transactions via drag & drop
- * - User drags transaction from one category column to another
- * - Example: "Coffee" from "Shopping" → "Food" (fixing wrong category)
- * - Common use cases: Fix bulk import errors, correct manual entries
+ * Re-categorize transactions via drag & drop.
  * 
- * Three-phase mutation pattern for instant UI feedback:
+ * Three-phase mutation pattern:
  * 1. onMutate: Update cache immediately (optimistic)
  * 2. onError: Rollback on API failure
  * 3. onSuccess: Refetch to sync with server
  * 
- * Interview Key Points:
+ * Features:
  * - Cancel outgoing queries to prevent race conditions
  * - Snapshot current state for rollback
  * - Direct cache manipulation via setQueryData
- * - Handle edge cases: concurrent updates, network failures
+ * - Handles concurrent updates and network failures
  */
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
@@ -146,8 +143,6 @@ export function useUpdateCategory() {
 
       // Show error notification
       // toast.error('Failed to update category. Changes reverted.')
-      
-      // Interview point: Always provide user feedback on failures
     },
 
     // ========================================================================

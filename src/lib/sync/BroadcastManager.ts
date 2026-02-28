@@ -1,7 +1,7 @@
 /**
  * Broadcast Manager for Multi-Tab Sync
  * 
- * Synchronizes state across multiple browser tabs using BroadcastChannel API.
+ * Synchronizes state across browser tabs using BroadcastChannel API.
  * Implements leader election to optimize WebSocket connections.
  * 
  * Strategy:
@@ -9,11 +9,7 @@
  * - Leader broadcasts events to other tabs
  * - If leader closes, new leader is elected automatically
  * - All tabs process events (from WebSocket or BroadcastChannel)
- * 
- * Interview Points:
- * - Reduces server load (1 connection instead of N tabs)
- * - BroadcastChannel is faster than localStorage events
- * - Leader election prevents duplicate connections
+ * - Reduces server load (1 connection vs N tabs)
  * - Seamless failover when leader closes
  */
 

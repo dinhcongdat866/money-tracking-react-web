@@ -3,20 +3,13 @@
 /**
  * Real-time Kanban Synchronization Hook
  * 
- * Integrates WebSocket updates with TanStack Query cache for real-time sync.
- * This is the CORE of the WebSocket integration - handles all cache updates.
+ * Integrates WebSocket updates with TanStack Query cache.
  * 
- * Key Features:
- * - Direct cache manipulation (no unnecessary refetches)
- * - Conflict resolution (check if currently mutating)
- * - Event deduplication (prevent double updates)
- * - Multi-tab sync (via BroadcastChannel)
- * - Handles updates for transactions not in cache
- * 
- * Interview Points:
- * - setQueryData vs invalidateQueries trade-off
- * - Optimistic update conflict resolution
- * - Infinite query page updates
+ * Features:
+ * - Direct cache manipulation for instant updates
+ * - Conflict resolution with optimistic updates
+ * - Event deduplication to prevent double processing
+ * - Multi-tab sync via BroadcastChannel
  * - Version-based conflict detection
  * - Memory-efficient event processing
  */

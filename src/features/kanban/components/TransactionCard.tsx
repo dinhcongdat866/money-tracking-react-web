@@ -12,16 +12,15 @@ type TransactionCardProps = {
 };
 
 /**
- * Transaction Card Component (Draggable)
+ * Transaction Card Component
  * 
- * Draggable card representing a single transaction in the Kanban board.
- * Similar to a candidate card in the interview problem.
+ * Draggable card for a single transaction.
  * 
  * Features:
  * - Draggable with @dnd-kit
- * - Amount and type (income/expense)
- * - Date
- * - Optional note
+ * - Amount with income/expense styling
+ * - Formatted date
+ * - Optional note (line-clamped)
  * - Category badge
  * - Visual feedback during drag
  */

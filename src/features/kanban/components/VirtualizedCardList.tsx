@@ -16,30 +16,23 @@ type VirtualizedCardListProps = {
 };
 
 /**
- * Professional-Grade Virtualized List with Infinite Scroll
+ * Virtualized Card List
  * 
- * Implements @tanstack/react-virtual for high-performance rendering
- * of large transaction lists in Kanban columns.
+ * High-performance list rendering using @tanstack/react-virtual.
  * 
- * Key Features:
- * - Only renders visible cards (~15-20 items) regardless of total count
- * - Dynamic height support (cards with notes are taller)
+ * Features:
+ * - Only renders visible cards (~15-20 items)
+ * - Dynamic height support for variable card sizes
  * - Smooth 60 FPS scrolling with 2000+ items
- * - Auto-measures actual card heights for accuracy
- * - Infinite scroll trigger at 80% (professional standard)
- * - Scroll position stability (no jumping)
- * - Background loading states
+ * - Auto-measures actual card heights
+ * - Infinite scroll trigger at 80%
+ * - Scroll position stability during updates
+ * - GPU-accelerated positioning with transform
  * 
- * Interview Points:
- * - Reduces DOM nodes by 97% (500 items → 15 rendered)
- * - estimateSize for initial placeholder heights
- * - measureElement for actual heights after render (dynamic heights)
- * - overscan for smooth scrolling (renders 5 extra above/below)
- * - Absolute positioning with transform for performance (GPU accelerated)
- * - Infinite loading at 80% scroll (professional UX pattern)
- * - <100ms render time target with memo and transforms
- * 
- * Performance Target: <100ms render time
+ * Performance:
+ * - 97% reduction in DOM nodes (500 items → 15 rendered)
+ * - <100ms render time
+ * - Overscan of 5 items for smooth scrolling
  */
 export function VirtualizedCardList({
   transactions,
@@ -67,15 +60,8 @@ export function VirtualizedCardList({
   /**
    * Infinite Scroll Trigger at 80%
    * 
-   * - Triggers fetchNextPage when user scrolls to 80% of loaded content
-   * - Prevents loading too early (better rate limiting)
-   * - Prevents loading too late (better UX)
-   * - Only triggers if: has more data + not already fetching
-   * 
-   * Interview Discussion:
-   * - Why 80%? Balance between UX (preload) and performance (rate limit)
-   * - Alternative: Intersection Observer on last item (less precise)
-   * - Alternative: Load on scroll to bottom (poor UX - visible loading)
+   * Triggers fetchNextPage when user scrolls 80% through loaded content.
+   * Balances preloading (smooth UX) with rate limiting (server-friendly).
    */
   useEffect(() => {
     if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return;

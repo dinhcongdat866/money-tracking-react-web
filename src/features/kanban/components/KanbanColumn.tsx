@@ -17,17 +17,15 @@ type KanbanColumnProps = {
 };
 
 /**
- * Kanban Column Component (Droppable)
+ * Kanban Column Component
  * 
- * Represents a single category/stage column in the Kanban board.
- * Similar to a pipeline stage column in the interview problem.
+ * Droppable column for a single transaction category.
  * 
  * Features:
  * - Category header with icon and total
  * - Virtualized transaction list with infinite scroll
- * - Drop zone for drag & drop
- * - Visual feedback when dragging over
- * - Empty state
+ * - Drop zone with visual feedback
+ * - Empty state with helpful message
  * - Background loading indicator
  */
 export function KanbanColumn({

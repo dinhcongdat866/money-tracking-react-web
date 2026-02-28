@@ -9,20 +9,14 @@ import type { TransactionItem } from '@/features/transactions/types';
 /**
  * Kanban Column Infinite Query Hook
  * 
- * Professional-grade infinite scroll for Kanban columns.
+ * Infinite scroll implementation for transaction categories.
  * 
- * Key Features:
+ * Features:
  * - Cursor-based pagination (100 items per page)
- * - Handles 2000+ items per column without freezing
- * - Rate limiting with 1-minute staleTime
- * - Optimized query keys for cache management
- * - Automatic background refetch
- * 
- * Interview Points:
- * - useInfiniteQuery for cursor-based pagination
- * - getNextPageParam extracts cursor from last page
- * - Flattened pages array for virtualization
- * - staleTime prevents redundant fetches (rate limiting)
+ * - Handles 2000+ items per column smoothly
+ * - Smart caching with 1-minute staleTime
+ * - Automatic background refetch on focus
+ * - Flattened pages for virtual list consumption
  * 
  * @param categoryId - Category ID for this column
  * @param filters - Month, type, search filters
@@ -61,9 +55,7 @@ export function useKanbanColumn(categoryId: string, filters: KanbanFilters) {
     // Initial page param (no cursor = first page)
     initialPageParam: undefined,
     
-    // Rate limiting: Cache data for 1 minute
-    // Prevents redundant fetches when scrolling/navigating
-    // Aligned with "100 requests per minute" requirement
+    // Cache data for 1 minute to prevent redundant fetches
     staleTime: STALE_TIME.MEDIUM,
     
     // Refetch on window focus for fresh data

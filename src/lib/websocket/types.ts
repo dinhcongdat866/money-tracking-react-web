@@ -2,7 +2,6 @@
  * WebSocket Event Types & Schema
  * 
  * Defines all real-time events for multi-device synchronization.
- * Aligned with hiring pipeline interview requirements.
  */
 
 import type { TransactionItem } from '@/features/transactions/types';

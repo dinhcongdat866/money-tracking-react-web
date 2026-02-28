@@ -4,12 +4,7 @@
  * Virtual Loading Row Component
  * 
  * Displays at the bottom of virtualized list during background fetches.
- * Provides visual feedback for infinite scroll without disrupting the user.
- * 
- * Interview Points:
- * - Positioned as a virtual item in the list
- * - Skeleton loading pattern (better UX than spinners)
- * - Minimal height to avoid layout shift
+ * Uses skeleton loading pattern for better UX.
  */
 
 type LoadingRowProps = {

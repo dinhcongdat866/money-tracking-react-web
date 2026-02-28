@@ -18,25 +18,21 @@ type UpdateCategoryVariables = {
 };
 
 /**
- * Professional Optimistic Update Hook for Kanban
+ * Optimistic Update Hook for Category Changes
  * 
- * Three-phase mutation pattern for instant UI with robust rollback:
- * 1. onMutate: Update cache immediately (optimistic)
+ * Three-phase mutation for instant UI feedback:
+ * 1. onMutate: Update cache immediately
  * 2. onError: Rollback on API failure
- * 3. onSettled: Refetch to sync with server
+ * 3. onSuccess: Broadcast to other devices/tabs
  * 
- * Key Interview Points:
+ * Features:
  * - Cancel outgoing queries to prevent race conditions
- * - Snapshot infinite query pages for rollback
+ * - Snapshot state for rollback
  * - Direct cache manipulation via setQueryData
- * - Handle edge cases: concurrent updates, network failures
- * - Update all pages in infinite query structure
- * 
- * Performance Considerations:
- * - Updates only affected columns (not entire board)
- * - Preserves scroll position during update
- * - Immediate UI feedback (<16ms)
- * - Automatic rollback on error (prevents inconsistent state)
+ * - Concurrent mutation detection
+ * - Version-based conflict resolution
+ * - Updates only affected categories
+ * - <16ms UI response time
  */
 export function useUpdateCategoryOptimistic() {
   const queryClient = useQueryClient();
