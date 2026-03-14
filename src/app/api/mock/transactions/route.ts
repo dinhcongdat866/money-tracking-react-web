@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllTransactions, addTransaction } from "./mock-data";
-import type { TransactionItem } from "@/features/transactions/types";
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { prisma } from "@/lib/prisma";
+import { toTransactionItem } from "@/lib/db-helpers";
+import { TransactionType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -12,50 +9,48 @@ export async function GET(req: NextRequest) {
   const page = Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1);
   const limit = Math.max(parseInt(searchParams.get("limit") ?? "20", 10), 1);
 
-  await delay(300);
+  const where = month ? { date: { startsWith: month } } : {};
 
-  let transactions = getAllTransactions();
-  
-  if (month) {
-    transactions = transactions.filter(t => t.date.startsWith(month));
-  }
-  
-  const total = transactions.length;
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const items = transactions.slice(startIndex, endIndex);
-  
+  const [total, rows] = await Promise.all([
+    prisma.transaction.count({ where }),
+    prisma.transaction.findMany({
+      where,
+      orderBy: { date: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+  ]);
+
   return NextResponse.json({
-    items,
+    items: rows.map(toTransactionItem),
     page,
     pageSize: limit,
     total,
-    hasMore: endIndex < total,
+    hasMore: page * limit < total,
   });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    await delay(300);
     const body = await req.json();
-    
-    const transaction = addTransaction({
-      amount: body.amount,
-      type: body.type,
-      category: {
-        id: body.categoryId,
-        name: body.categoryName,
+
+    const tx = await prisma.transaction.create({
+      data: {
+        amount: body.amount,
+        type: body.type as TransactionType,
+        categoryId: body.categoryId,
+        categoryName: body.categoryName,
+        categoryIcon: body.categoryIcon ?? null,
+        date: body.date,
+        note: body.note ?? null,
       },
-      date: body.date,
-      note: body.note,
     });
-    
-    return NextResponse.json(transaction, { status: 201 });
+
+    return NextResponse.json(toTransactionItem(tx), { status: 201 });
   } catch {
     return NextResponse.json(
       { error: "Failed to create transaction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

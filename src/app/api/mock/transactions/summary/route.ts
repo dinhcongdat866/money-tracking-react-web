@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllTransactions } from "../mock-data";
+import { prisma } from "@/lib/prisma";
 import type { MonthlySummary } from "@/features/transactions/types";
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -17,27 +13,23 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  await delay(300);
+  const rows = await prisma.transaction.findMany({
+    where: { date: { startsWith: month } },
+    select: { type: true, amount: true },
+  });
 
-  const allTransactions = getAllTransactions();
-  const monthTransactions = allTransactions.filter(t => t.date.startsWith(month));
-  
-  const income = monthTransactions
-    .filter(t => t.type === 'income')
+  const income = rows
+    .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
-  
-  const expenses = monthTransactions
-    .filter(t => t.type === 'expense')
+
+  const expenses = rows
+    .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
-  
+
   const difference = income - expenses;
-  
+
   const [year, m] = month.split("-").map(Number);
-  const label = new Date(
-    year,
-    (m ?? 1) - 1,
-    1,
-  ).toLocaleDateString("en-US", {
+  const label = new Date(year!, (m ?? 1) - 1, 1).toLocaleDateString("en-US", {
     month: "short",
     year: "numeric",
   });
@@ -51,5 +43,3 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(result);
 }
-
-

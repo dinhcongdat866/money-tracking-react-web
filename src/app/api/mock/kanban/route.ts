@@ -1,130 +1,97 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllTransactions } from "../transactions/mock-data";
+import { prisma } from "@/lib/prisma";
+import { toTransactionItem } from "@/lib/db-helpers";
+import { TransactionType, Prisma } from "@prisma/client";
 
 /**
- * Kanban API Route - Cursor-based Pagination
- * 
- * Professional-grade pagination for high-performance Kanban boards.
- * Supports:
- * - Cursor-based pagination (100 items per page)
- * - Category filtering (column-specific data)
- * - Search and type filters
- * - Handles 2000+ items per column efficiently
- * 
- * Query Parameters:
- * - cursor: Last item ID from previous page (for pagination)
- * - limit: Items per page (default: 100, max: 200)
- * - category: Filter by category ID
- * - month: Filter by month (yyyy-MM)
- * - type: Filter by type (income/expense/all)
- * - search: Search in note, category, amount
+ * Kanban API Route — cursor-based pagination backed by PostgreSQL.
+ *
+ * Query params:
+ *   cursor   — last item ID from previous page
+ *   limit    — items per page (default 100, max 200)
+ *   category — filter by categoryId
+ *   month    — filter by YYYY-MM
+ *   type     — income | expense | all
+ *   search   — full-text search in note, categoryName, amount
  */
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  
-  // Pagination params
+
   const cursor = searchParams.get("cursor");
   const limit = Math.min(
     Math.max(parseInt(searchParams.get("limit") ?? "100", 10), 1),
-    200 // Max 200 items per page
+    200,
   );
-  
-  // Filter params
   const category = searchParams.get("category");
   const month = searchParams.get("month") ?? undefined;
-  const type = searchParams.get("type") as 'income' | 'expense' | 'all' | null;
+  const typeParam = searchParams.get("type") as
+    | "income"
+    | "expense"
+    | "all"
+    | null;
   const search = searchParams.get("search");
 
-  // Simulate network latency (300ms - realistic API call)
-  await delay(300);
+  // Build WHERE clause
+  const where: Prisma.TransactionWhereInput = {};
 
-  // Get all transactions from mutable mock storage
-  let filteredTransactions = getAllTransactions();
-
-  // Apply month filter
-  if (month) {
-    filteredTransactions = filteredTransactions.filter(
-      t => t.date.startsWith(month)
-    );
+  if (month) where.date = { startsWith: month };
+  if (category) where.categoryId = category;
+  if (typeParam && typeParam !== "all") {
+    where.type = typeParam as TransactionType;
   }
-
-  // Apply filters
-  if (category) {
-    filteredTransactions = filteredTransactions.filter(
-      t => t.category.id === category
-    );
-  }
-
-  if (type && type !== 'all') {
-    filteredTransactions = filteredTransactions.filter(
-      t => t.type === type
-    );
-  }
-
   if (search) {
-    const searchLower = search.toLowerCase();
-    filteredTransactions = filteredTransactions.filter(t => {
-      const matchesNote = t.note?.toLowerCase().includes(searchLower);
-      const matchesCategory = t.category.name.toLowerCase().includes(searchLower);
-      const matchesAmount = t.amount.toString().includes(search);
-      return matchesNote || matchesCategory || matchesAmount;
-    });
+    where.OR = [
+      { note: { contains: search, mode: "insensitive" } },
+      { categoryName: { contains: search, mode: "insensitive" } },
+    ];
   }
 
-  // Sort by date (newest first) for consistent ordering
-  filteredTransactions.sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  // Total counts for summary (all matching, not just current page)
+  const [allRows, total] = await Promise.all([
+    prisma.transaction.findMany({
+      where,
+      select: { type: true, amount: true },
+    }),
+    prisma.transaction.count({ where }),
+  ]);
 
-  // Cursor-based pagination
-  let startIndex = 0;
-  if (cursor) {
-    const cursorIndex = filteredTransactions.findIndex(t => t.id === cursor);
-    if (cursorIndex !== -1) {
-      startIndex = cursorIndex + 1; // Start after cursor
-    }
-  }
-
-  // Get page of items
-  const items = filteredTransactions.slice(startIndex, startIndex + limit);
-  
-  // Determine next cursor (ID of last item in this page)
-  const nextCursor = items.length === limit 
-    ? items[items.length - 1].id 
-    : null;
-
-  // Calculate summary for this category (from ALL filtered transactions, not just current page)
-  // This ensures consistent numbers as user loads more pages
-  const totalIncome = filteredTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const totalExpenses = filteredTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
+  const totalIncome = allRows
+    .filter((t) => t.type === "income")
+    .reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = allRows
+    .filter((t) => t.type === "expense")
+    .reduce((s, t) => s + t.amount, 0);
   const categoryTotal = totalIncome - totalExpenses;
 
+  // Cursor-based page fetch
+  const items = await prisma.transaction.findMany({
+    where,
+    orderBy: [{ date: "desc" }, { id: "asc" }],
+    take: limit + 1, // fetch one extra to determine hasMore
+    ...(cursor
+      ? {
+          cursor: { id: cursor },
+          skip: 1, // skip the cursor item itself
+        }
+      : {}),
+  });
+
+  const hasMore = items.length > limit;
+  const pageItems = items.slice(0, limit);
+  const nextCursor = hasMore ? pageItems[pageItems.length - 1]?.id ?? null : null;
+
   return NextResponse.json({
-    items,
+    items: pageItems.map(toTransactionItem),
     nextCursor,
-    hasMore: nextCursor !== null,
-    
-    // Summary represents complete filtered dataset
-    total: filteredTransactions.length,
-    categoryTotal,
-    totalIncome,
-    totalExpenses,
-    
+    hasMore,
+    total,
+    categoryTotal: Math.round(categoryTotal * 100) / 100,
+    totalIncome: Math.round(totalIncome * 100) / 100,
+    totalExpenses: Math.round(totalExpenses * 100) / 100,
     pagination: {
       limit,
-      currentCount: items.length,
-      totalAvailable: filteredTransactions.length,
+      currentCount: pageItems.length,
+      totalAvailable: total,
     },
   });
 }
