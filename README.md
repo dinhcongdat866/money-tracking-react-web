@@ -237,7 +237,7 @@ Tests include:
 
 ## 📝 Notes
 
-- **Mock Data:** In-memory mock data via Route Handlers (`/api/mock/*`)
+- **API:** Route Handlers backed by PostgreSQL (`/api/transactions`, `/api/balance`, `/api/summary`, `/api/expenses/top`)
 - **Authentication:** Mock JWT flow for demonstration (not production-ready security)
 - **WebSocket Server:** Mock server for local development (`pnpm ws-server`)
 

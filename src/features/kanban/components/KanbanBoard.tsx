@@ -15,6 +15,7 @@ import {
 } from '@dnd-kit/core';
 import { KanbanColumn } from './KanbanColumn';
 import { KanbanFilters } from './KanbanFilters';
+import { KanbanSkeleton } from './KanbanSkeleton';
 import { TransactionCard } from './TransactionCard';
 import { useKanbanColumns } from '../hooks/useKanbanColumn';
 import { useUpdateCategoryOptimistic } from '../hooks/useUpdateCategoryOptimistic';
@@ -112,14 +113,7 @@ export function KanbanBoard() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading transactions...</p>
-        </div>
-      </div>
-    );
+    return <KanbanSkeleton />;
   }
 
   return (

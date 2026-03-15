@@ -9,7 +9,16 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, type Category } from "../data/categories";
+import type { Category } from "../data/categories";
+import { TRANSACTION_CATEGORIES } from "@/features/kanban/types";
+
+// Use same category IDs as Kanban so new transactions appear in the correct column
+const INCOME_CATEGORIES_FORM = TRANSACTION_CATEGORIES.filter(
+  (c) => c.id === "income"
+).map((c) => ({ id: c.id, name: c.name, icon: c.icon }));
+const EXPENSE_CATEGORIES_FORM = TRANSACTION_CATEGORIES.filter(
+  (c) => c.id !== "income"
+).map((c) => ({ id: c.id, name: c.name, icon: c.icon }));
 
 type CategorySelectionProps = {
   open: boolean;
@@ -27,7 +36,7 @@ export function CategorySelection({
   const [selectedType, setSelectedType] = useState<"income" | "expense">(type);
 
   const categories =
-    selectedType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+    selectedType === "income" ? INCOME_CATEGORIES_FORM : EXPENSE_CATEGORIES_FORM;
 
   const handleSelect = (category: Category) => {
     onSelect(category);

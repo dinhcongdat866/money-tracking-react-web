@@ -8,8 +8,20 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { loginThunk } from "@/store/slices/auth/authThunks";
 import { selectAuthLoading, selectAuthError } from "@/store/slices/auth/authSelectors";
 
-export function LoginForm() {
+function safeReturnUrl(path: string | null): string {
+  if (!path || typeof path !== "string") return "/dashboard";
+  const trimmed = path.trim();
+  if (trimmed === "" || trimmed.startsWith("//") || trimmed.includes(":")) return "/dashboard";
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+type LoginFormProps = {
+  initialReturnUrl?: string | null;
+};
+
+export function LoginForm({ initialReturnUrl = null }: LoginFormProps) {
   const dispatch = useAppDispatch();
+  const returnUrl = safeReturnUrl(initialReturnUrl);
   const isLoading = useAppSelector(selectAuthLoading);
   const error = useAppSelector(selectAuthError);
 
@@ -24,7 +36,7 @@ export function LoginForm() {
 
     if (loginThunk.fulfilled.match(result)) {
       // Full navigation so the next request includes the auth cookie (reliable in production)
-      window.location.href = "/dashboard";
+      window.location.href = returnUrl;
       return;
     }
   };

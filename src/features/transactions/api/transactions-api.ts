@@ -33,7 +33,7 @@ export async function getMonthlyTransactions(
   });
 
   return apiRequest<PaginatedTransactionsResponse>(
-    `/api/mock/transactions?${params.toString()}`,
+    `/api/transactions?${params.toString()}`,
     { cache: "no-store" },
   );
 }
@@ -49,7 +49,7 @@ export async function getMonthlySummaryApi(
   });
 
   return apiRequest<MonthlySummary>(
-    `/api/mock/transactions/summary?${params.toString()}`,
+    `/api/transactions/summary?${params.toString()}`,
     { cache: "no-store" },
   );
 }
@@ -63,7 +63,7 @@ export async function getTransactionDetail(
   }
 
   return apiRequest<TransactionItem>(
-    `/api/mock/transactions/${id}`,
+    `/api/transactions/${id}`,
     { cache: "no-store" },
   );
 }
@@ -88,7 +88,7 @@ export async function createTransaction(
   validateTransactionType(data.type);
   validateCategory({ id: data.categoryId, name: data.categoryName });
 
-  return apiRequest<TransactionItem>("/api/mock/transactions", {
+  return apiRequest<TransactionItem>("/api/transactions", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -107,7 +107,7 @@ export async function updateTransaction(
   validateTransactionType(data.type);
   validateCategory({ id: data.categoryId, name: data.categoryName });
 
-  return apiRequest<TransactionItem>(`/api/mock/transactions/${id}`, {
+  return apiRequest<TransactionItem>(`/api/transactions/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -119,7 +119,7 @@ export async function deleteTransaction(id: string): Promise<void> {
     throw new Error("Transaction ID is required");
   }
 
-  await apiRequest<void>(`/api/mock/transactions/${id}`, {
+  await apiRequest<void>(`/api/transactions/${id}`, {
     method: "DELETE",
   });
 }

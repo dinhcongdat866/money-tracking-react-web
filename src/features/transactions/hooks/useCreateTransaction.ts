@@ -10,10 +10,12 @@ import {
 } from "../api/transactions-api";
 import type { TransactionItem } from "../types";
 import type { PaginatedTransactionsResponse } from "../api/transactions-api";
+import type { KanbanPaginatedResponse } from "@/features/kanban/types";
 import {
   transactionKeys,
   financialKeys,
   analyticsKeys,
+  invalidateAllKanban,
 } from "@/lib/query-keys";
 import type { BaseMutationOptions } from "@/lib/react-query-types";
 import type { ApiError } from "@/lib/api-errors";
@@ -124,16 +126,46 @@ export function useCreateTransaction(
 
         const scope = key[1];
 
-        // Monthly lists: only update the month that matches the new transaction
-        if (scope === "monthly") {
-          const monthKey = key[2];
-          if (monthKey !== txMonthKey) continue;
-        } else if (scope === "detail") {
-          // Skip detail queries entirely
+        if (scope === "detail") continue;
+
+        // Kanban columns: update the column that matches category and month
+        if (scope === "kanban") {
+          const categoryId = key[2];
+          const filters = key[3] as { month: string; type?: string; search?: string } | undefined;
+          if (categoryId !== newTransaction.categoryId || filters?.month !== txMonthKey) continue;
+          const filterType = filters?.type ?? "all";
+          if (filterType !== "all" && filterType !== newTransaction.type) continue;
+          const kanbanData = data as InfiniteData<KanbanPaginatedResponse>;
+          if (!Array.isArray(kanbanData.pages)) continue;
+          const updated: InfiniteData<KanbanPaginatedResponse> = {
+            pageParams: kanbanData.pageParams,
+            pages: kanbanData.pages.map((page, index) => {
+              if (index === 0) {
+                return {
+                  ...page,
+                  items: [optimisticTransaction, ...page.items],
+                  total: page.total + 1,
+                  pagination: {
+                    ...page.pagination,
+                    totalAvailable: page.pagination.totalAvailable + 1,
+                  },
+                };
+              }
+              return page;
+            }),
+          };
+          queryClient.setQueryData(key, updated);
           continue;
         }
 
-        // Runtime guard to ensure we only cast when data looks like InfiniteData
+        // Monthly lists: only update the month that matches the new transaction
+        if (scope === "monthly") {
+          const monthKeyFromCache = key[2];
+          if (monthKeyFromCache !== txMonthKey) continue;
+        } else {
+          continue;
+        }
+
         const infinite = data as InfiniteData<PaginatedTransactionsResponse>;
         if (!Array.isArray(infinite.pages)) continue;
 
@@ -176,7 +208,7 @@ export function useCreateTransaction(
         variant: "error",
       });
     },
-    onSettled: (data, _error, variables) => {
+    onSettled: async (data, _error, variables) => {
       const dateSource = data?.date ?? variables.date;
       const d = new Date(dateSource);
       const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
@@ -198,6 +230,11 @@ export function useCreateTransaction(
 
       queryClient.invalidateQueries({ queryKey: financialKeys.all });
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // Cancel in-flight Kanban refetches so they don't overwrite cache with stale data
+      await queryClient.cancelQueries({ queryKey: transactionKeys.kanban() });
+      await invalidateAllKanban(queryClient);
+      // Refetch active Kanban queries so the board updates immediately when open
+      await queryClient.refetchQueries({ queryKey: transactionKeys.kanban() });
     },
     ...options,
   });

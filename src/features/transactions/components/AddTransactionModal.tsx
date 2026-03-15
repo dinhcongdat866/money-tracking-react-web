@@ -17,7 +17,7 @@ import type { Category } from "../data/categories";
 import type { TransactionItem } from "../types";
 import { useCreateTransaction } from "../hooks/useCreateTransaction";
 import { useUpdateTransaction } from "../hooks/useUpdateTransaction";
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "../data/categories";
+import { TRANSACTION_CATEGORIES } from "@/features/kanban/types";
 
 type AddTransactionModalProps = {
   open: boolean;
@@ -50,8 +50,12 @@ export function AddTransactionModal({
       setNote(transaction.note || "");
       setSelectedDate(new Date(transaction.date));
       
-      // Find category from the transaction
-      const allCategories = [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+      // Find category from the transaction (same IDs as Kanban)
+      const allCategories = TRANSACTION_CATEGORIES.map((c) => ({
+        id: c.id,
+        name: c.name,
+        icon: c.icon,
+      }));
       const foundCategory = allCategories.find(
         (cat) => cat.id === transaction.category.id
       );

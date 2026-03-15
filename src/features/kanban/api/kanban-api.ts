@@ -35,7 +35,7 @@ export async function getKanbanColumnData(
     searchParams.append('search', params.search);
   }
 
-  const response = await fetch(`/api/mock/kanban?${searchParams.toString()}`);
+  const response = await fetch(`/api/transactions?${searchParams.toString()}`);
   
   if (!response.ok) {
     throw new Error(`Failed to fetch kanban data: ${response.statusText}`);
