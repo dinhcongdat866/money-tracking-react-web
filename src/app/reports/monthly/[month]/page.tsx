@@ -1,9 +1,11 @@
+import { prisma } from "@/lib/prisma";
+import { toTransactionItem } from "@/lib/db-helpers";
 import type { TransactionItem } from "@/features/transactions/types";
 
 export const revalidate = 86400; // ISR: regenerate every 24 hours (60 * 60 * 24)
 
 type PageProps = {
-  params: { month: string };
+  params: Promise<{ month: string }>;
 };
 
 function getMonthLabel(monthKey: string) {
@@ -50,27 +52,18 @@ function groupByDate(transactions: TransactionItem[]) {
   return groups;
 }
 
-async function fetchMonthlyTransactions(month: string) {
-  const params = new URLSearchParams({ month, limit: "500" });
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-
-  const res = await fetch(`${baseUrl}/api/mock/transactions?${params.toString()}`, {
-    next: { revalidate },
+async function fetchMonthlyTransactions(month: string): Promise<TransactionItem[]> {
+  const where = month ? { date: { startsWith: month } } : {};
+  const rows = await prisma.transaction.findMany({
+    where,
+    orderBy: { date: "desc" },
+    take: 500,
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to load monthly report");
-  }
-
-  const json = await res.json();
-  // API returns paginated shape; pick items if present, else fallback to raw list
-  return Array.isArray(json) ? (json as TransactionItem[]) : (json.items as TransactionItem[]);
+  return rows.map(toTransactionItem);
 }
 
 export default async function MonthlyReportPage({ params }: PageProps) {
-  const { month } = params;
+  const { month } = await params;
   const monthKey = month ?? "";
   const transactions = await fetchMonthlyTransactions(monthKey);
   const summary = computeSummary(transactions);

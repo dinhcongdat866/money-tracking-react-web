@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import type { PieLabelRenderProps } from "recharts";
 import type { TransactionItem } from "../types";
 
 type ExpenseByCategoryProps = {
@@ -107,7 +108,7 @@ export function ExpenseByCategory({ transactions }: ExpenseByCategoryProps) {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ percentage }) => `${percentage.toFixed(1)}%`}
+              label={(props: PieLabelRenderProps & { percentage?: number }) => `${(props.percentage ?? 0).toFixed(1)}%`}
               outerRadius={100}
               fill="#8884d8"
               dataKey="value"
