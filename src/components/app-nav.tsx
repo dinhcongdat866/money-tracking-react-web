@@ -9,7 +9,6 @@ import { logoutThunk } from "@/store/slices/auth/authThunks";
 import { useAuthSync } from "@/hooks/useAuthSync";
 
 const links = [
-  { href: "/", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
   { href: "/transactions/kanban", label: "Kanban" },
@@ -56,10 +55,7 @@ export function AppNav({ userEmail: serverUserEmail }: AppNavProps) {
         <div className="flex items-center gap-4 text-sm">
           <nav className="flex items-center gap-4">
             {links.map((link) => {
-              const isActive =
-                link.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(link.href);
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
 
               return (
                 <Link

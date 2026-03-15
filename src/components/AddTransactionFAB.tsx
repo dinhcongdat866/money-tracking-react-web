@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddTransactionModal } from "@/features/transactions/components/AddTransactionModal";
 
 export function AddTransactionFAB() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  if (pathname === "/login") return null;
 
   return (
     <>

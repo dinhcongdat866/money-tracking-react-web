@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +10,6 @@ import { selectAuthLoading, selectAuthError } from "@/store/slices/auth/authSele
 
 export function LoginForm() {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const isLoading = useAppSelector(selectAuthLoading);
   const error = useAppSelector(selectAuthError);
 
@@ -25,9 +23,9 @@ export function LoginForm() {
     const result = await dispatch(loginThunk({ email, password }));
 
     if (loginThunk.fulfilled.match(result)) {
-      // Redirect on success
-      router.refresh();
-      router.push('/dashboard');
+      // Full navigation so the next request includes the auth cookie (reliable in production)
+      window.location.href = "/dashboard";
+      return;
     }
   };
 
