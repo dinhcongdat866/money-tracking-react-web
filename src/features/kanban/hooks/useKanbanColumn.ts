@@ -103,11 +103,14 @@ export function useKanbanColumns(
   categories: string[],
   filters: KanbanFilters
 ) {
-  // Create queries for all categories
-  const columns = categories.map(categoryId => ({
-    categoryId,
-    ...useKanbanColumn(categoryId, filters),
-  }));
+  // Create queries for all categories. Categories list is stable (TRANSACTION_CATEGORIES).
+  const columns = categories.map((categoryId) => {
+    return {
+      categoryId,
+      // eslint-disable-next-line react-hooks/rules-of-hooks -- categoryIds from TRANSACTION_CATEGORIES, stable at runtime
+      ...useKanbanColumn(categoryId, filters),
+    };
+  });
 
   const summary = {
     totalTransactions: columns.reduce((sum, col) => sum + col.totalCount, 0),

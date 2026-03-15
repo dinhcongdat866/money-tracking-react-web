@@ -1,4 +1,4 @@
-import { Balance, CategoryExpense, Summary, TimeRange, Transaction } from "../types";
+import { Balance, CategoryExpense, Summary, TimeRange } from "../types";
 import type { PaginatedTransactionsResponse } from "@/features/transactions/api/transactions-api";
 
 export async function getBalance(): Promise<Balance> {

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     previousEnd = new Date(now.getFullYear(), now.getMonth(), 0);
   }
 
-  const toDateStr = (d: Date) => d.toISOString().split("T")[0]!;
+  const toDateStr = (d: Date): string => d.toISOString().split("T")[0] ?? "";
 
   const [currentRows, previousRows] = await Promise.all([
     prisma.transaction.findMany({

@@ -63,8 +63,10 @@ export function useUpdateCategoryOptimistic() {
     }: UpdateCategoryVariables) => {
       // 0. Check for concurrent mutations on same transaction
       const mutations = queryClient.getMutationCache().getAll();
-      const isAlreadyMutating = mutations.some(mutation => {
-        const variables = mutation.state.variables as any;
+      const isAlreadyMutating = mutations.some((mutation) => {
+        const variables = mutation.state.variables as
+          | { transactionId?: string }
+          | undefined;
         return (
           variables?.transactionId === transactionId &&
           mutation.state.status === 'pending' &&

@@ -36,7 +36,7 @@ type VirtualizedCardListProps = {
  */
 export function VirtualizedCardList({
   transactions,
-  category,
+  category: _category,
   highlightedId,
   hasNextPage = false,
   isFetchingNextPage = false,

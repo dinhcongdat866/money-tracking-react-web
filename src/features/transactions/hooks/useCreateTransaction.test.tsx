@@ -270,8 +270,8 @@ describe("useCreateTransaction", () => {
 
   it("should handle mutation loading state", async () => {
     // Delay fetch to test loading state
-    let resolveFetch: (value: unknown) => void;
-    const fetchPromise = new Promise((resolve) => {
+    let resolveFetch: ((value: unknown) => void) | undefined;
+    const fetchPromise = new Promise<unknown>((resolve) => {
       resolveFetch = resolve;
     });
 
@@ -303,8 +303,9 @@ describe("useCreateTransaction", () => {
     });
 
     // Resolve fetch
-    resolveFetch!({
-      ok: true,
+    if (resolveFetch) {
+      resolveFetch({
+        ok: true,
       status: 200,
       headers,
       json: async () => ({
@@ -315,6 +316,7 @@ describe("useCreateTransaction", () => {
         date: "2026-02-15T10:00:00.000Z",
       }),
     });
+    }
 
     await promise;
 

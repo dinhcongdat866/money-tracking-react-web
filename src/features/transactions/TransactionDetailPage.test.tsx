@@ -24,11 +24,11 @@ vi.mock("./components/AddTransactionModal", () => ({
 const mockUseTransactionDetail = vi.mocked(useTransactionDetail);
 const mockUseDeleteTransaction = vi.mocked(useDeleteTransaction);
 
-const baseDeleteHook = {
+const baseDeleteHook: ReturnType<typeof useDeleteTransaction> = {
   mutateAsync: vi.fn(),
   isPending: false,
   isError: false,
-} as any;
+} as unknown as ReturnType<typeof useDeleteTransaction>;
 
 describe("TransactionDetailPage", () => {
   beforeEach(() => {
@@ -40,7 +40,7 @@ describe("TransactionDetailPage", () => {
       data: undefined,
       isLoading: true,
       isError: false,
-    } as any);
+    } as ReturnType<typeof useTransactionDetail>);
 
     render(<TransactionDetailPage id="tx-1" />);
 
@@ -54,7 +54,7 @@ describe("TransactionDetailPage", () => {
       data: undefined,
       isLoading: false,
       isError: true,
-    } as any);
+    } as ReturnType<typeof useTransactionDetail>);
 
     render(<TransactionDetailPage id="tx-1" />);
 
@@ -75,7 +75,7 @@ describe("TransactionDetailPage", () => {
       },
       isLoading: false,
       isError: false,
-    } as any);
+    } as ReturnType<typeof useTransactionDetail>);
 
     render(<TransactionDetailPage id="tx-1" />);
 
@@ -96,12 +96,12 @@ describe("TransactionDetailPage", () => {
       },
       isLoading: false,
       isError: false,
-    } as any);
+    } as ReturnType<typeof useTransactionDetail>);
 
     mockUseDeleteTransaction.mockReturnValue({
       ...baseDeleteHook,
       isPending: true,
-    } as any);
+    } as ReturnType<typeof useDeleteTransaction>);
 
     render(<TransactionDetailPage id="tx-1" />);
 

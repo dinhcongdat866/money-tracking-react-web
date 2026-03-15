@@ -15,12 +15,14 @@ export async function GET(req: NextRequest) {
     const monday = new Date(now);
     monday.setDate(now.getDate() - dayOfWeek);
     monday.setHours(0, 0, 0, 0);
-    startDate = monday.toISOString().split("T")[0]!;
+    const dateStr = monday.toISOString().split("T")[0];
+    startDate = dateStr ?? "";
   } else {
     startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   }
 
-  const today = now.toISOString().split("T")[0]!;
+  const todayStr = now.toISOString().split("T")[0];
+  const today = todayStr ?? "";
 
   const rows = await prisma.transaction.groupBy({
     by: ["categoryId", "categoryName"],

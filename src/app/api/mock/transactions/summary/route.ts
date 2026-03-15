@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   const difference = income - expenses;
 
   const [year, m] = month.split("-").map(Number);
-  const label = new Date(year!, (m ?? 1) - 1, 1).toLocaleDateString("en-US", {
+  const label = new Date(Number(year), (m ?? 1) - 1, 1).toLocaleDateString("en-US", {
     month: "short",
     year: "numeric",
   });

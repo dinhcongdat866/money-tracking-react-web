@@ -44,6 +44,8 @@ export function useRealtimeKanban(filters: KanbanFilters) {
   const transactionVersions = useRef(new Map<string, number>());
 
   useEffect(() => {
+    const processedEventsMap = processedEvents.current;
+    const transactionVersionsMap = transactionVersions.current;
     // Subscribe to WebSocket events
     const unsubscribers: (() => void)[] = [];
 
@@ -135,18 +137,20 @@ export function useRealtimeKanban(filters: KanbanFilters) {
 
     return () => {
       // Cleanup all subscriptions
-      unsubscribers.forEach(unsub => unsub());
-      
+      unsubscribers.forEach((unsub) => unsub());
+
       // Clear all pending timeouts to prevent memory leaks
-      pendingTimeouts.current.forEach(timeout => clearTimeout(timeout));
+      pendingTimeouts.current.forEach((timeout) => clearTimeout(timeout));
       pendingTimeouts.current = [];
-      
+
       // Clear processed events map
-      processedEvents.current.clear();
-      
+      processedEventsMap.clear();
+
       // Clear transaction versions map
-      transactionVersions.current.clear();
+      transactionVersionsMap.clear();
     };
+    // Handlers are stable; re-running on their change would cause duplicate subscriptions
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subscribe, filters.month, filters.type, filters.search]);
 
   // ============================================================================
@@ -462,7 +466,7 @@ export function useRealtimeKanban(filters: KanbanFilters) {
 
     // ✅ VERSION CHECK: For delete events
     // Note: Delete events might not have version, but we check timestamp
-    const version = (event.data as any).version;
+    const version = (event.data as { version?: number }).version;
     const timestamp = event.timestamp;
     if (isOutdatedEvent(transactionId, version, timestamp)) {
       console.log('[Realtime] Skipped outdated transaction:deleted event');
@@ -513,8 +517,8 @@ export function useRealtimeKanban(filters: KanbanFilters) {
   const isTransactionBeingMutated = (transactionId: string): boolean => {
     const mutations = queryClient.getMutationCache().getAll();
     
-    return mutations.some(mutation => {
-      const variables = mutation.state.variables as any;
+    return mutations.some((mutation) => {
+      const variables = mutation.state.variables as { transactionId?: string } | undefined;
       return (
         variables?.transactionId === transactionId &&
         mutation.state.status === 'pending'
@@ -544,5 +548,7 @@ export function useRealtimeKanban(filters: KanbanFilters) {
     if (updates.length > 0) {
       console.log(`[Realtime] Processed ${updates.length} queued updates`);
     }
+  // Intentionally depend on mutation cache length to process queued updates after mutations settle
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- queryClient identity is stable
   }, [queryClient.getMutationCache().getAll().length]);
 }

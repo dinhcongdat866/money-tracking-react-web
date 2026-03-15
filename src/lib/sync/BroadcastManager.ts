@@ -142,7 +142,7 @@ export class BroadcastManager {
   /**
    * Handle incoming broadcast messages
    */
-  private handleMessage(data: any): void {
+  private handleMessage(data: { type: string; leaderId?: string }): void {
     // Handle internal messages
     if (data.type === 'leader:elected') {
       if (this.debug) console.log(`[Broadcast] New leader: ${data.leaderId}`);
@@ -227,7 +227,7 @@ export class BroadcastManager {
    * Generate unique key for event deduplication
    */
   private generateEventKey(event: WebSocketEvent): string {
-    const data = event.data as any;
+    const data = event.data as Record<string, unknown> & { transactionId?: string; transaction?: { id: string }; id?: string };
     
     switch (event.type) {
       case 'transaction:moved':
@@ -246,7 +246,7 @@ export class BroadcastManager {
   /**
    * Broadcast internal message
    */
-  private broadcast(message: any): void {
+  private broadcast(message: Record<string, unknown>): void {
     if (!this.channel) return;
     this.channel.postMessage(message);
   }

@@ -73,7 +73,7 @@ class MockWebSocketServer {
     });
   }
 
-  private handleMessage(ws: WebSocket, message: any): void {
+  private handleMessage(ws: WebSocket, message: { type: string }): void {
     console.log('📨 Received:', message);
 
     // Handle ping
@@ -122,7 +122,7 @@ class MockWebSocketServer {
     });
   }
 
-  private sendToClient(ws: WebSocket, data: any): void {
+  private sendToClient(ws: WebSocket, data: unknown): void {
     ws.send(JSON.stringify(data));
   }
 
@@ -204,7 +204,7 @@ class MockWebSocketServer {
 export { MockWebSocketServer };
 
 // Auto-start server when file is executed
-const server = new MockWebSocketServer(PORT);
+const _server = new MockWebSocketServer(PORT);
 
 // Server is ready - will broadcast events when received from clients
 console.log('✅ WebSocket server ready');

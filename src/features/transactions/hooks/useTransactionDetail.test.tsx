@@ -184,8 +184,8 @@ describe("useTransactionDetail", () => {
     };
 
     // Simulate slow API
-    let resolvePromise: (value: unknown) => void;
-    const slowPromise = new Promise((resolve) => {
+    let resolvePromise: ((value: unknown) => void) | undefined;
+    const slowPromise = new Promise<unknown>((resolve) => {
       resolvePromise = resolve;
     });
 
@@ -208,12 +208,14 @@ describe("useTransactionDetail", () => {
     expect(result.current.isFetching).toBe(true);
 
     // Resolve the promise
-    resolvePromise!({
-      ok: true,
-      status: 200,
-      headers,
-      json: async () => mockTransaction,
-    });
+    if (resolvePromise) {
+      resolvePromise({
+        ok: true,
+        status: 200,
+        headers,
+        json: async () => mockTransaction,
+      });
+    }
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

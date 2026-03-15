@@ -24,7 +24,7 @@ type TransactionCardProps = {
  * - Category badge
  * - Visual feedback during drag
  */
-export function TransactionCard({ transaction, isDragging = false, isHighlighted = false }: TransactionCardProps) {
+export function TransactionCard({ transaction, isDragging: _isDragging = false, isHighlighted = false }: TransactionCardProps) {
   const isIncome = transaction.type === 'income';
 
   const {

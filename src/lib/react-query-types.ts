@@ -70,7 +70,7 @@ export type BaseMutationOptions<
  * type Key = QueryKeyOf<typeof transactionKeys.monthly>;
  * // Key = readonly ["transactions", "monthly", string]
  */
-export type QueryKeyOf<T extends (...args: any[]) => readonly unknown[]> =
+export type QueryKeyOf<T extends (...args: unknown[]) => readonly unknown[]> =
   ReturnType<T>;
 
 /**

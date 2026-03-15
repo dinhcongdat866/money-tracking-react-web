@@ -95,14 +95,14 @@ export function useUpdateCategory() {
       const monthlyData = queryClient.getQueryData(monthKey);
       
       if (monthlyData) {
+        type MonthlyData = { items: TransactionItem[]; [key: string]: unknown };
         queryClient.setQueryData(
           monthKey,
-          (old: any) => {
+          (old: MonthlyData | undefined) => {
             if (!old?.items) return old;
-            
             return {
               ...old,
-              items: old.items.map((t: TransactionItem) => 
+              items: old.items.map((t: TransactionItem) =>
                 t.id === transactionId ? updatedTransaction : t
               ),
             };
@@ -148,7 +148,7 @@ export function useUpdateCategory() {
     // ========================================================================
     // PHASE 3: SUCCESS (refetch to sync with server)
     // ========================================================================
-    onSuccess: (data, variables, context) => {
+    onSuccess: (_data, variables) => {
       // Invalidate related queries to refetch server state
       // This ensures our optimistic update matches server reality
       

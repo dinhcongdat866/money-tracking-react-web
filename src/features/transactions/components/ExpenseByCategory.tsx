@@ -71,7 +71,14 @@ export function ExpenseByCategory({ transactions }: ExpenseByCategoryProps) {
     percentage: item.percentage,
   }));
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  type TooltipPayloadItem = { name: string; value: number; payload: { percentage: number } };
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: TooltipPayloadItem[];
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
