@@ -15,7 +15,6 @@
     "metrics:phase1": "tsx scripts/collect-metrics.ts --phase=phase-1",
     "metrics:phase2": "tsx scripts/collect-metrics.ts --phase=phase-2",
     "analyze": "ANALYZE=true pnpm build",
-    "generate:mock": "tsx src/lib/mock-data/generate-mock-data.ts",
     "ws-server": "tsx src/lib/websocket/mockWebSocketServer.ts",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
