@@ -70,8 +70,11 @@ export type BaseMutationOptions<
  * type Key = QueryKeyOf<typeof transactionKeys.monthly>;
  * // Key = readonly ["transactions", "monthly", string]
  */
-export type QueryKeyOf<T extends (...args: any[]) => readonly unknown[]> =
-  ReturnType<T>;
+export type QueryKeyOf<T> = T extends (...args: infer _) => infer R
+  ? R extends readonly unknown[]
+    ? R
+    : never
+  : never;
 
 /**
  * Simplified query options for hooks that don't need full UseQueryOptions
