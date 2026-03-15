@@ -11,6 +11,15 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  // Type-aware rules (e.g. use-unknown-in-catch-callback-variable) need parser project
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.eslint.json",
+      },
+    },
+  },
   {
     rules: {
       // Ban explicit `any` — use `unknown` instead

@@ -133,8 +133,6 @@ Mock authentication with JWT tokens in httpOnly cookies, middleware protection f
 # Install dependencies
 pnpm install
 
-# Generate mock data (initialize app with sample transactions)
-pnpm generate:mock
 
 # Start development server
 pnpm dev
