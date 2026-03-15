@@ -15,6 +15,11 @@
 
 import type { WebSocketEvent } from '@/lib/websocket/types';
 
+type BroadcastMessage =
+  | { type: 'leader:elected'; leaderId?: string }
+  | { type: 'leader:heartbeat'; leaderId: string }
+  | { type: 'websocket:event'; fromTab: string; event: WebSocketEvent };
+
 const CHANNEL_NAME = 'money-tracker-sync';
 const LEADER_KEY = 'ws-leader-id';
 const HEARTBEAT_INTERVAL = 5000; // 5 seconds
@@ -142,7 +147,7 @@ export class BroadcastManager {
   /**
    * Handle incoming broadcast messages
    */
-  private handleMessage(data: { type: string; leaderId?: string }): void {
+  private handleMessage(data: BroadcastMessage): void {
     // Handle internal messages
     if (data.type === 'leader:elected') {
       if (this.debug) console.log(`[Broadcast] New leader: ${data.leaderId}`);
@@ -160,19 +165,19 @@ export class BroadcastManager {
     }
 
     // Handle WebSocket events
-    if (data.event) {
-      const event = data.event as WebSocketEvent;
+    if (data.type === 'websocket:event') {
+      const { event, fromTab } = data;
       
       // Ignore events from self (prevent duplicate handling)
-      if (data.fromTab === this.tabId) {
+      if (fromTab === this.tabId) {
         if (this.debug) {
-          console.log(`[Broadcast] Ignoring self-broadcast from ${data.fromTab}`);
+          console.log(`[Broadcast] Ignoring self-broadcast from ${fromTab}`);
         }
         return;
       }
       
       if (this.debug) {
-        console.log(`[Broadcast] Received from ${data.fromTab}:`, event.type);
+        console.log(`[Broadcast] Received from ${fromTab}:`, event.type);
       }
 
       // Notify all handlers
