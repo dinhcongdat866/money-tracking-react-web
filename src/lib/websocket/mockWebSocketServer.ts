@@ -24,7 +24,7 @@ import {
   type TransactionMovedEvent,
 } from './types';
 
-const PORT = 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Mock transaction data
 const categories = ['income', 'food', 'transport', 'housing', 'shopping', 'utilities', 'other'];
