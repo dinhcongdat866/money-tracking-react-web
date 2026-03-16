@@ -10,7 +10,7 @@ Tracking performance and code quality metrics for production-grade React app.
 
 Real-world measurements on the Kanban page (heaviest page) show:
 
-- Lighthouse Performance **94**
+- Lighthouse Performance **97**
 - FCP **0.3s**
 - LCP **0.4s**
 - Scroll smoothness around **62 FPS**
