@@ -36,4 +36,4 @@ mutation.mutate(data)           // UI updates instantly
 - Integration: `src/features/kanban/hooks/useRealtimeKanban.ts`
 - Mock Server: `src/lib/websocket/mockWebSocketServer.ts`
 
-**Start mock server:** `npm run ws-server`
+**Start mock server:** `pnpm run ws-server`
