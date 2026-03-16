@@ -30,6 +30,16 @@ A production-grade personal finance tracker built with Next.js 15, showcasing re
 
 *Measured on production deployment: `money-tracking-react-web.vercel.app` with real-time WebSocket sync active.*
 
+Screenshots:
+- Lighthouse (Throttling x4, 3G):
+<img width="1206" height="871" alt="Image" src="https://github.com/user-attachments/assets/ff493ca6-14e5-455e-b149-ca5e2e6464c3" />
+
+- DOM nodes for virtual list (15/2000+):
+<img width="1108" height="641" alt="Image" src="https://github.com/user-attachments/assets/4d35e838-c0cb-452d-951b-4b59da57092c" />
+
+- FPS & GPU:
+<img width="194" height="183" alt="Image" src="https://github.com/user-attachments/assets/1971e519-6505-44f6-b3c1-25dbe27dc3af" />
+
 ## 🚀 Core Features
 
 ### 1. **Dashboard** - Financial Overview
