@@ -18,10 +18,10 @@ const virtualizer = useVirtualizer({
 
 ## Results
 
-- **DOM nodes:** 5,000 → 25 (97% reduction)
+- **DOM nodes:** 2,000 → ~15 (98% reduction)
 - **Render time:** 800ms → 50ms (16× faster)
 - **Scroll FPS:** 20 → 60 (smooth)
-- **Memory:** 87MB → 14MB (84% less)
+- **Memory:** 4MB
 
 **Key:** GPU-accelerated positioning with `transform: translateY()` instead of `top` property. Handles variable heights automatically via `measureElement`.
 

@@ -14,7 +14,7 @@ A production-grade personal finance tracker built with Next.js 15, showcasing re
 | **Infinite Scroll** | IntersectionObserver + cursor pagination | Smooth loading, no layout shift |
 | **State Management** | React Query + query key factory | Zero prop drilling, intelligent caching |
 
-→ [Performance Metrics](./metrics/README.md) | [Virtual List Deep Dive](./docs/VIRTUALIZED_LIST.md) | [WebSocket Architecture](./docs/WEBSOCKET_SYNC.md)
+→ [Performance Metrics](./metrics/README.md) | [Virtual List Deep Dive](./docs/VIRTUALIZED_LIST.md) | [WebSocket Architecture](./docs/WEBSOCKET_SYNC.md) | [Optimistic Updates](./docs/OPTIMISTIC_UPDATES.md)
 
 ---
 
@@ -169,9 +169,6 @@ pnpm test
 
 # Run tests with coverage
 pnpm test:coverage
-
-# Collect performance metrics
-pnpm collect-metrics
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
