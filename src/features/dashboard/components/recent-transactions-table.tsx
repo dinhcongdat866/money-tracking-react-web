@@ -81,7 +81,7 @@ export default function RecentTransactionsTable() {
                   {isFetchingNextPage && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {isFetchingNextPage ? "Loading more..." : "Load more"}
+                  {isFetchingNextPage && "Loading more..."}
                 </Button>
               </div>
             )}
