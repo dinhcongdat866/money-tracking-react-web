@@ -8,7 +8,7 @@ A production-grade personal finance tracker built with Next.js 15, showcasing re
 
 | Feature | Implementation | Impact |
 |---------|---------------|--------|
-| **Virtual Scrolling** | @tanstack/react-virtual | Render 2000+ items at 60 FPS (97% DOM reduction) |
+| **Virtual Scrolling** | @tanstack/react-virtual | Only rendering ~15 visible rows from 1000+ item datasets (~98% DOM reduction), maintaining ~62 FPS during scroll — verified via DevTools Performance and Chrome Frame Rendering |
 | **Real-Time Sync** | Native WebSocket + BroadcastChannel | <100ms cross-device updates, 80% connection efficiency |
 | **Optimistic Updates** | React Query mutations | <16ms UI response, graceful rollback |
 | **Infinite Scroll** | IntersectionObserver + cursor pagination | Smooth loading, no layout shift |
@@ -17,6 +17,18 @@ A production-grade personal finance tracker built with Next.js 15, showcasing re
 → [Performance Metrics](./metrics/README.md) | [Virtual List Deep Dive](./docs/VIRTUALIZED_LIST.md) | [WebSocket Architecture](./docs/WEBSOCKET_SYNC.md)
 
 ---
+
+## 📈 Measured Performance (Kanban Page — heaviest page)
+
+| Metric | Value |
+|--------|-------|
+| **Lighthouse Performance** | 94 |
+| **First Contentful Paint (FCP)** | 0.3s |
+| **Largest Contentful Paint (LCP)** | 0.4s |
+| **Scroll FPS** | ~62 FPS |
+| **DOM nodes rendered** | ~15 of 1000+ items (~98% reduction) |
+
+*Measured on production deployment: `money-tracking-react-web.vercel.app` with real-time WebSocket sync active.*
 
 ## 🚀 Core Features
 

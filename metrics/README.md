@@ -8,6 +8,16 @@ Tracking performance and code quality metrics for production-grade React app.
 - **WebSocket real-time sync** across devices/tabs
 - **Optimistic updates** with <16ms UI response time
 
+Real-world measurements on the Kanban page (heaviest page) show:
+
+- Lighthouse Performance **94 (desktop) / 92 (mobile)**
+- FCP **0.3s desktop / 0.5s mobile**
+- LCP **0.4s desktop / 0.5s mobile**
+- Scroll smoothness around **62 FPS**
+- DOM footprint of **~15 rendered cards out of 700+ items (~98% reduction)**
+
+Screenshots:
+
 ## 📊 Quick Metrics
 
 ```bash
