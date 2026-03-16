@@ -22,11 +22,11 @@ A production-grade personal finance tracker built with Next.js 15, showcasing re
 
 | Metric | Value |
 |--------|-------|
-| **Lighthouse Performance** | 94 |
-| **First Contentful Paint (FCP)** | 0.3s |
-| **Largest Contentful Paint (LCP)** | 0.4s |
+| **Lighthouse Performance** | 97 |
+| **First Contentful Paint (FCP)** | 0.6s |
+| **Largest Contentful Paint (LCP)** | 0.6s |
 | **Scroll FPS** | ~62 FPS |
-| **DOM nodes rendered** | ~15 of 1000+ items (~98% reduction) |
+| **DOM nodes rendered** | ~15 of 2000+ items (~98% reduction) |
 
 *Measured on production deployment: `money-tracking-react-web.vercel.app` with real-time WebSocket sync active.*
 
