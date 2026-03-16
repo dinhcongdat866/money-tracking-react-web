@@ -54,6 +54,8 @@ Real-time balance tracking with week/month comparisons, top expense categories, 
 ### 2. **Kanban Board** - Drag & Drop Transaction Management
 Organize transactions by categories with drag-and-drop. Handles 500+ transactions per column smoothly via virtualization.
 
+<img width="1913" height="916" alt="Image" src="https://github.com/user-attachments/assets/e08bb730-c888-4d65-9f3c-05430a9e4890" />
+
 **Key Patterns:**
 - **Virtual scrolling** renders only visible cards (~20 DOM nodes for 500 items)
 - **Optimistic drag-and-drop** with instant UI feedback + rollback on error
