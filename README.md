@@ -1,8 +1,9 @@
 # Money Tracking App
 
-**[→ Live Demo](https://money-tracking-react-web.vercel.app)**
+**[→ Live Demo (with real-time WebSocket)](https://money-tracking-react-web.vercel.app)**  
+<sub>If the WebSocket server (Railway) is down due to free-tier limits, the app will gracefully fall back to HTTP-only updates. You can still browse all pages and patterns.</sub>
 
-A full-stack personal finance tracker running in production on Vercel, backed by a real Neon Postgres database. Built with Next.js 15, React 19, and TypeScript.
+A full-stack personal finance tracker running in production on Vercel, backed by a real Neon Postgres database and a dedicated WebSocket server on Railway. Built with Next.js 15, React 19, and TypeScript.
 
 **What makes this different:** This is an actual production deployment—real database, real WebSocket sync across devices, Lighthouse 97 on the heaviest page. Virtual scrolling renders only ~15 DOM nodes from 2000+ records. Every performance number in this README is measured, reproducible, and linked to evidence.
 
@@ -30,7 +31,7 @@ A full-stack personal finance tracker running in production on Vercel, backed by
 | **Scroll FPS** | ~62 FPS |
 | **DOM nodes rendered** | ~15 of 2000+ items (~98% reduction) |
 
-*Measured on production deployment: `money-tracking-react-web.vercel.app` (without WebSocket server — see WebSocket note below).*
+*Measured on production deployment: `money-tracking-react-web.vercel.app` with real-time WebSocket sync active.*
 
 Screenshots:
 - Lighthouse (Throttling x4, 3G):
@@ -307,7 +308,7 @@ Tests include:
 
 - **API:** Route Handlers backed by Neon Postgres (`/api/transactions`, `/api/balance`, `/api/summary`, `/api/expenses/top`)
 - **Authentication:** JWT in httpOnly cookies via `jose`; mock user store (auth patterns are production-grade, user management is intentionally minimal)
-- **WebSocket Server (important):** There is **no WebSocket server in production**. Real-time sync only works when you run the local mock server with `pnpm ws-server` (see Quick Start). On the Vercel demo, data updates via HTTP only.
+- **WebSocket Server:** Deployed on Railway — real-time sync is fully functional on the live demo. Run `pnpm ws-server` for local development.
 
 ---
 
@@ -320,4 +321,4 @@ This is a personal learning project, but feel free to:
 
 ---
 
-**[Live on Vercel →](https://money-tracking-react-web.vercel.app)** — Browse the code to see production patterns applied to a real, deployed application.
+**[Live on Vercel →](https://money-tracking-react-web.vercel.app)** — Browse the code to see production patterns applied to a real, deployed application. If WebSocket real-time sync is unavailable (Railway free tier expired), all features still work over HTTP.
