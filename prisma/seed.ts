@@ -89,8 +89,10 @@ async function seed() {
   const deleted = await prisma.transaction.deleteMany({});
   console.log(`🗑️  Cleared ${deleted.count} existing transactions`);
 
-  // Generate 500 transactions spanning the last 6 months
-  const TRANSACTION_COUNT = 500;
+  // Generate transactions spanning the last 6 months
+  // Allow overriding the default via SEED_TRANSACTION_COUNT env for heavy testing
+  const TRANSACTION_COUNT =
+    Number(process.env.SEED_TRANSACTION_COUNT ?? "500") || 500;
   const now = new Date();
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 

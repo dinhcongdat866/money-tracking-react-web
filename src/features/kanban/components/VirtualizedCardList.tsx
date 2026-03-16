@@ -116,6 +116,7 @@ export function VirtualizedCardList({
                 left: 0,
                 width: '100%',
                 transform: `translateY(${virtualItem.start}px)`,
+                willChange: 'transform',
                 paddingBottom: '8px', // Gap between cards
               }}
             >
