@@ -11,34 +11,34 @@ import { useWebSocket } from '@/providers/WebSocketProvider';
 import { cn } from '@/lib/utils';
 
 export function ConnectionStatus() {
-  const { status, isConnected, reconnect } = useWebSocket();
+  const { status, isConnected } = useWebSocket();
 
   const statusConfig = {
     connected: {
       color: 'bg-green-500',
-      text: 'Live',
+      text: 'Leader',
       textColor: 'text-green-700 dark:text-green-400',
-      description: 'Real-time updates enabled',
+      description: 'This tab holds the WebSocket connection and broadcasts updates to other tabs.',
     },
     connecting: {
       color: 'bg-yellow-500',
-      text: 'Connecting...',
+      text: 'Becoming leader...',
       textColor: 'text-yellow-700 dark:text-yellow-400',
-      description: 'Establishing connection',
+      description: 'Establishing leadership and WebSocket connection.',
     },
     reconnecting: {
       color: 'bg-orange-500',
-      text: 'Reconnecting...',
+      text: 'Reconnecting as leader...',
       textColor: 'text-orange-700 dark:text-orange-400',
-      description: 'Attempting to reconnect',
+      description: 'Attempting to restore leadership connection.',
     },
     disconnected: {
-      color: 'bg-red-500',
-      text: 'Offline',
-      textColor: 'text-red-700 dark:text-red-400',
-      description: 'No real-time updates',
+      color: 'bg-slate-400',
+      text: 'Follower',
+      textColor: 'text-slate-700 dark:text-slate-300',
+      description: 'Receiving real-time updates from the leader tab via multi-tab sync.',
     },
-  };
+  } as const;
 
   const config = statusConfig[status];
 
@@ -73,16 +73,6 @@ export function ConnectionStatus() {
           {config.description}
         </span>
       </div>
-
-      {/* Reconnect button (only show when disconnected) */}
-      {status === 'disconnected' && (
-        <button
-          onClick={reconnect}
-          className="ml-auto text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          Reconnect
-        </button>
-      )}
     </div>
   );
 }
@@ -94,11 +84,11 @@ export function ConnectionStatusCompact() {
   const { status, isConnected } = useWebSocket();
 
   const statusConfig = {
-    connected: { color: 'bg-green-500', text: 'Live' },
-    connecting: { color: 'bg-yellow-500', text: 'Connecting' },
+    connected: { color: 'bg-green-500', text: 'Leader' },
+    connecting: { color: 'bg-yellow-500', text: 'Becoming leader' },
     reconnecting: { color: 'bg-orange-500', text: 'Reconnecting' },
-    disconnected: { color: 'bg-red-500', text: 'Offline' },
-  };
+    disconnected: { color: 'bg-slate-400', text: 'Follower' },
+  } as const;
 
   const config = statusConfig[status];
 
