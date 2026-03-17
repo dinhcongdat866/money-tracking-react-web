@@ -1,9 +1,9 @@
 /**
  * Broadcast Manager for Multi-Tab Sync
- * 
+ *
  * Synchronizes state across browser tabs using BroadcastChannel API.
  * Implements leader election to optimize WebSocket connections.
- * 
+ *
  * Strategy:
  * - Only 1 tab (leader) maintains WebSocket connection
  * - Leader broadcasts events to other tabs
@@ -22,22 +22,27 @@ type BroadcastMessage =
 
 const CHANNEL_NAME = 'money-tracker-sync';
 const LEADER_KEY = 'ws-leader-id';
-const HEARTBEAT_INTERVAL = 5000; // 5 seconds
-const HEARTBEAT_TIMEOUT = 10000; // 10 seconds
+const HEARTBEAT_INTERVAL = 5000;   // Leader sends heartbeat every 5 s
+const HEARTBEAT_TIMEOUT = 12000;   // Follower re-elects if no heartbeat for 12 s
+const FOLLOWER_POLL_INTERVAL = 4000; // Follower checks heartbeat every 4 s
 
 export class BroadcastManager {
   private channel: BroadcastChannel | null = null;
   private tabId: string;
   private isLeader = false;
   private heartbeatInterval: NodeJS.Timeout | null = null;
+  private followerMonitorInterval: NodeJS.Timeout | null = null;
   private eventHandlers: Set<(event: WebSocketEvent) => void> = new Set();
+  private onBecomeLeaderCallbacks: Set<() => void> = new Set();
+  private onStepDownCallbacks: Set<() => void> = new Set();
   private debug: boolean;
   private recentLocalEvents: Set<string> = new Set();
+  private storageListener: ((e: StorageEvent) => void) | null = null;
 
   constructor(debug = false) {
     this.tabId = this.generateTabId();
     this.debug = debug;
-    
+
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       this.init();
     } else {
@@ -45,114 +50,195 @@ export class BroadcastManager {
     }
   }
 
-  /**
-   * Initialize broadcast channel and elect leader
-   */
+  // ============================================================================
+  // INIT
+  // ============================================================================
+
   private init(): void {
     this.channel = new BroadcastChannel(CHANNEL_NAME);
-    
+
     this.channel.onmessage = (event) => {
       this.handleMessage(event.data);
     };
 
-    // Attempt leader election
+    // Detect clean leader shutdown: storage event fires on all OTHER tabs
+    // when the key is removed in cleanup()
+    this.storageListener = (e: StorageEvent) => {
+      if (this.isLeader) return;
+
+      if (e.key === LEADER_KEY && e.newValue === null) {
+        if (this.debug) console.log(`[Broadcast] Leader key removed (storage event), re-electing`);
+        this.electLeader();
+      }
+    };
+    window.addEventListener('storage', this.storageListener);
+
     this.electLeader();
 
-    // Handle tab close
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => {
-        this.cleanup();
-      });
-    }
+    window.addEventListener('beforeunload', () => {
+      this.cleanup();
+    });
   }
+
+  // ============================================================================
+  // LEADER ELECTION
+  // ============================================================================
 
   /**
    * Leader Election Algorithm
-   * 
-   * Simple but effective approach:
-   * 1. Each tab writes its ID to localStorage
-   * 2. After 50ms delay, check if your ID is still there
-   * 3. If yes, you're the leader!
-   * 4. Leader sends heartbeat every 5s
-   * 5. Other tabs monitor heartbeat, become leader if timeout
+   *
+   * 1. If an alive leader exists (heartbeat fresh), become follower immediately.
+   * 2. Otherwise write own tabId to localStorage.
+   * 3. After 50 ms, whoever's ID is still there wins (last writer wins, safe enough
+   *    because only one tab reaches this code at a time when triggered by storage event).
+   * 4. Winner → becomeLeader(); loser → setAsFollower().
    */
   private electLeader(): void {
     const currentLeader = localStorage.getItem(LEADER_KEY);
     const lastHeartbeat = localStorage.getItem(`${LEADER_KEY}-heartbeat`);
-    
-    // Check if current leader is alive
+
     if (currentLeader && lastHeartbeat) {
-      const timeSinceHeartbeat = Date.now() - parseInt(lastHeartbeat, 10);
-      
-      if (timeSinceHeartbeat < HEARTBEAT_TIMEOUT) {
-        // Leader is alive, we're a follower
-        this.isLeader = false;
-        if (this.debug) console.log(`[Broadcast] Follower tab (${this.tabId})`);
+      const elapsed = Date.now() - parseInt(lastHeartbeat, 10);
+      if (elapsed < HEARTBEAT_TIMEOUT) {
+        if (this.debug) console.log(`[Broadcast] Alive leader found, becoming follower (${this.tabId})`);
+        this.setAsFollower();
         return;
       }
     }
 
-    // No leader or leader is dead, attempt to become leader
+    // No leader or stale leader — attempt to claim leadership
     localStorage.setItem(LEADER_KEY, this.tabId);
-    
+
     setTimeout(() => {
-      const storedLeader = localStorage.getItem(LEADER_KEY);
-      
-      if (storedLeader === this.tabId) {
+      const stored = localStorage.getItem(LEADER_KEY);
+      if (stored === this.tabId) {
         this.becomeLeader();
       } else {
-        this.isLeader = false;
-        if (this.debug) console.log(`[Broadcast] Lost election (${this.tabId})`);
+        // Another tab wrote last and won
+        this.setAsFollower();
       }
     }, 50);
   }
 
-  /**
-   * Become the leader tab
-   */
+  // ============================================================================
+  // LEADER STATE
+  // ============================================================================
+
   private becomeLeader(): void {
     this.isLeader = true;
+    this.stopFollowerMonitor();
+
     if (this.debug) console.log(`[Broadcast] ✅ Leader tab (${this.tabId})`);
-    
-    // Start heartbeat
+
     this.startHeartbeat();
-    
-    // Notify other tabs
-    this.broadcast({
-      type: 'leader:elected',
-      leaderId: this.tabId,
+
+    this.broadcast({ type: 'leader:elected', leaderId: this.tabId });
+
+    this.onBecomeLeaderCallbacks.forEach((cb) => {
+      try { cb(); } catch (err) { console.error('[Broadcast] onBecomeLeader callback error:', err); }
+    });
+  }
+
+  private startHeartbeat(): void {
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+
+    this.heartbeatInterval = setInterval(() => {
+      if (!this.isLeader) return;
+      localStorage.setItem(`${LEADER_KEY}-heartbeat`, Date.now().toString());
+      this.broadcast({ type: 'leader:heartbeat', leaderId: this.tabId });
+    }, HEARTBEAT_INTERVAL);
+  }
+
+  private stepDown(): void {
+    if (this.debug) console.log(`[Broadcast] Stepping down (${this.tabId})`);
+
+    this.isLeader = false;
+
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+
+    this.startFollowerMonitor();
+
+    this.onStepDownCallbacks.forEach((cb) => {
+      try { cb(); } catch (err) { console.error('[Broadcast] onStepDown callback error:', err); }
+    });
+  }
+
+  // ============================================================================
+  // FOLLOWER STATE
+  // ============================================================================
+
+  /**
+   * Transition to follower state.
+   * Called after losing an election OR being explicitly told to step down.
+   */
+  private setAsFollower(): void {
+    if (this.isLeader) {
+      // Edge case: we were leader and are now being demoted
+      this.stepDown();
+      return;
+    }
+
+    this.isLeader = false;
+    if (this.debug) console.log(`[Broadcast] Follower tab (${this.tabId})`);
+
+    this.startFollowerMonitor();
+
+    this.onStepDownCallbacks.forEach((cb) => {
+      try { cb(); } catch (err) { console.error('[Broadcast] onStepDown callback error:', err); }
     });
   }
 
   /**
-   * Start leader heartbeat
+   * Follower polls heartbeat timestamp every FOLLOWER_POLL_INTERVAL ms.
+   * If heartbeat is stale (> HEARTBEAT_TIMEOUT), assumes leader is dead and
+   * triggers re-election. This handles crashed/force-killed leader tabs where
+   * beforeunload never fires.
    */
-  private startHeartbeat(): void {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
+  private startFollowerMonitor(): void {
+    this.stopFollowerMonitor();
 
-    this.heartbeatInterval = setInterval(() => {
+    this.followerMonitorInterval = setInterval(() => {
       if (this.isLeader) {
-        localStorage.setItem(`${LEADER_KEY}-heartbeat`, Date.now().toString());
-        
-        this.broadcast({
-          type: 'leader:heartbeat',
-          leaderId: this.tabId,
-        });
+        this.stopFollowerMonitor();
+        return;
       }
-    }, HEARTBEAT_INTERVAL);
+
+      const lastHeartbeat = localStorage.getItem(`${LEADER_KEY}-heartbeat`);
+      if (!lastHeartbeat) {
+        if (this.debug) console.log(`[Broadcast] No heartbeat found, re-electing`);
+        this.electLeader();
+        return;
+      }
+
+      const elapsed = Date.now() - parseInt(lastHeartbeat, 10);
+      if (elapsed > HEARTBEAT_TIMEOUT) {
+        if (this.debug) console.log(`[Broadcast] Heartbeat stale (${elapsed}ms), re-electing`);
+        // Clear stale keys so other followers don't also think a leader exists
+        localStorage.removeItem(LEADER_KEY);
+        localStorage.removeItem(`${LEADER_KEY}-heartbeat`);
+        this.electLeader();
+      }
+    }, FOLLOWER_POLL_INTERVAL);
   }
 
-  /**
-   * Handle incoming broadcast messages
-   */
+  private stopFollowerMonitor(): void {
+    if (this.followerMonitorInterval) {
+      clearInterval(this.followerMonitorInterval);
+      this.followerMonitorInterval = null;
+    }
+  }
+
+  // ============================================================================
+  // MESSAGE HANDLING
+  // ============================================================================
+
   private handleMessage(data: BroadcastMessage): void {
-    // Handle internal messages
     if (data.type === 'leader:elected') {
-      if (this.debug) console.log(`[Broadcast] New leader: ${data.leaderId}`);
-      
-      // If we were leader but someone else got elected, step down
+      if (this.debug) console.log(`[Broadcast] New leader announced: ${data.leaderId}`);
+
       if (this.isLeader && data.leaderId !== this.tabId) {
         this.stepDown();
       }
@@ -160,27 +246,20 @@ export class BroadcastManager {
     }
 
     if (data.type === 'leader:heartbeat') {
-      // Leader is alive, we remain follower
+      // Leader alive; nothing to do for follower
       return;
     }
 
-    // Handle WebSocket events
     if (data.type === 'websocket:event') {
       const { event, fromTab } = data;
-      
-      // Ignore events from self (prevent duplicate handling)
+
       if (fromTab === this.tabId) {
-        if (this.debug) {
-          console.log(`[Broadcast] Ignoring self-broadcast from ${fromTab}`);
-        }
+        if (this.debug) console.log(`[Broadcast] Ignoring self-broadcast from ${fromTab}`);
         return;
       }
-      
-      if (this.debug) {
-        console.log(`[Broadcast] Received from ${fromTab}:`, event.type);
-      }
 
-      // Notify all handlers
+      if (this.debug) console.log(`[Broadcast] Received from ${fromTab}:`, event.type);
+
       this.eventHandlers.forEach((handler) => {
         try {
           handler(event);
@@ -191,9 +270,37 @@ export class BroadcastManager {
     }
   }
 
+  // ============================================================================
+  // PUBLIC API
+  // ============================================================================
+
   /**
-   * Broadcast WebSocket event to other tabs
-   * Only called by leader tab
+   * Register a callback invoked when THIS tab becomes the leader.
+   * If we are already the leader at registration time, the callback is called immediately.
+   */
+  public onBecomeLeader(callback: () => void): () => void {
+    this.onBecomeLeaderCallbacks.add(callback);
+
+    // Already leader — fire immediately so caller doesn't miss the event
+    if (this.isLeader) {
+      try { callback(); } catch (err) { console.error('[Broadcast] onBecomeLeader immediate callback error:', err); }
+    }
+
+    return () => this.onBecomeLeaderCallbacks.delete(callback);
+  }
+
+  /**
+   * Register a callback invoked when THIS tab steps down from leadership
+   * (either due to another tab winning, or clean shutdown).
+   */
+  public onStepDown(callback: () => void): () => void {
+    this.onStepDownCallbacks.add(callback);
+    return () => this.onStepDownCallbacks.delete(callback);
+  }
+
+  /**
+   * Broadcast a WebSocket event to all other tabs.
+   * Should only be called by the leader tab.
    */
   public broadcastEvent(event: WebSocketEvent, isLocalEvent = false): void {
     if (!this.channel) return;
@@ -204,15 +311,10 @@ export class BroadcastManager {
       event,
     });
 
-    // Track local events to prevent echo broadcasting
     if (isLocalEvent) {
       const eventKey = this.generateEventKey(event);
       this.recentLocalEvents.add(eventKey);
-      
-      // Auto-cleanup after 5 seconds
-      setTimeout(() => {
-        this.recentLocalEvents.delete(eventKey);
-      }, 5000);
+      setTimeout(() => this.recentLocalEvents.delete(eventKey), 5000);
     }
 
     if (this.debug) {
@@ -220,20 +322,39 @@ export class BroadcastManager {
     }
   }
 
-  /**
-   * Check if event is a recent local event (to prevent echo)
-   */
   public isRecentLocalEvent(event: WebSocketEvent): boolean {
-    const eventKey = this.generateEventKey(event);
-    return this.recentLocalEvents.has(eventKey);
+    return this.recentLocalEvents.has(this.generateEventKey(event));
   }
 
-  /**
-   * Generate unique key for event deduplication
-   */
+  public onEvent(handler: (event: WebSocketEvent) => void): () => void {
+    this.eventHandlers.add(handler);
+    return () => this.eventHandlers.delete(handler);
+  }
+
+  public isLeaderTab(): boolean {
+    return this.isLeader;
+  }
+
+  public getTabId(): string {
+    return this.tabId;
+  }
+
+  // ============================================================================
+  // INTERNAL HELPERS
+  // ============================================================================
+
+  private broadcast(message: Record<string, unknown>): void {
+    if (!this.channel) return;
+    this.channel.postMessage(message);
+  }
+
   private generateEventKey(event: WebSocketEvent): string {
-    const data = event.data as Record<string, unknown> & { transactionId?: string; transaction?: { id: string }; id?: string };
-    
+    const data = event.data as Record<string, unknown> & {
+      transactionId?: string;
+      transaction?: { id: string };
+      id?: string;
+    };
+
     switch (event.type) {
       case 'transaction:moved':
         return `${event.type}-${data.transactionId}-${data.newCategory}`;
@@ -244,82 +365,38 @@ export class BroadcastManager {
       case 'transaction:deleted':
         return `${event.type}-${data.transactionId}`;
       default:
-        return `${event.type}-${data.transactionId || data.transaction?.id || Date.now()}`;
+        return `${event.type}-${data.transactionId ?? data.transaction?.id ?? Date.now()}`;
     }
   }
 
-  /**
-   * Broadcast internal message
-   */
-  private broadcast(message: Record<string, unknown>): void {
-    if (!this.channel) return;
-    this.channel.postMessage(message);
+  private generateTabId(): string {
+    return `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  /**
-   * Subscribe to broadcast events
-   */
-  public onEvent(handler: (event: WebSocketEvent) => void): () => void {
-    this.eventHandlers.add(handler);
-    
-    return () => {
-      this.eventHandlers.delete(handler);
-    };
-  }
+  private cleanup(): void {
+    if (this.isLeader) {
+      // Removing the key fires a 'storage' event on all surviving follower tabs,
+      // which immediately triggers their re-election.
+      localStorage.removeItem(LEADER_KEY);
+      localStorage.removeItem(`${LEADER_KEY}-heartbeat`);
+      if (this.debug) console.log(`[Broadcast] Leader cleanup (${this.tabId})`);
+    }
 
-  /**
-   * Check if this tab is the leader
-   */
-  public isLeaderTab(): boolean {
-    return this.isLeader;
-  }
+    this.stopFollowerMonitor();
 
-  /**
-   * Step down from leader role
-   */
-  private stepDown(): void {
-    if (this.debug) console.log(`[Broadcast] Stepping down (${this.tabId})`);
-    
-    this.isLeader = false;
-    
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
     }
-  }
 
-  /**
-   * Cleanup on tab close
-   */
-  private cleanup(): void {
-    if (this.isLeader) {
-      localStorage.removeItem(LEADER_KEY);
-      localStorage.removeItem(`${LEADER_KEY}-heartbeat`);
-      
-      if (this.debug) console.log(`[Broadcast] Leader cleanup (${this.tabId})`);
-    }
-
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
+    if (this.storageListener) {
+      window.removeEventListener('storage', this.storageListener);
+      this.storageListener = null;
     }
 
     if (this.channel) {
       this.channel.close();
     }
-  }
-
-  /**
-   * Generate unique tab ID
-   */
-  private generateTabId(): string {
-    return `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
-   * Get tab ID
-   */
-  public getTabId(): string {
-    return this.tabId;
   }
 }
 
