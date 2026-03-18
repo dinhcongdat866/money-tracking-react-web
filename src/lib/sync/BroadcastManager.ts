@@ -22,6 +22,7 @@ type BroadcastMessage =
 
 const CHANNEL_NAME = 'money-tracker-sync';
 const LEADER_KEY = 'ws-leader-id';
+const LEADER_STARTED_KEY = `${LEADER_KEY}-started`;
 const HEARTBEAT_INTERVAL = 5000;   // Leader sends heartbeat every 5 s
 const HEARTBEAT_TIMEOUT = 12000;   // Follower re-elects if no heartbeat for 12 s
 const FOLLOWER_POLL_INTERVAL = 4000; // Follower checks heartbeat every 4 s
@@ -130,6 +131,10 @@ export class BroadcastManager {
 
     if (this.debug) console.log(`[Broadcast] ✅ Leader tab (${this.tabId})`);
 
+    const now = Date.now();
+    localStorage.setItem(LEADER_STARTED_KEY, now.toString());
+    localStorage.setItem(`${LEADER_KEY}-heartbeat`, now.toString());
+
     this.startHeartbeat();
 
     this.broadcast({ type: 'leader:elected', leaderId: this.tabId });
@@ -208,7 +213,22 @@ export class BroadcastManager {
 
       const lastHeartbeat = localStorage.getItem(`${LEADER_KEY}-heartbeat`);
       if (!lastHeartbeat) {
+        const currentLeader = localStorage.getItem(LEADER_KEY);
+        const startedAt = localStorage.getItem(LEADER_STARTED_KEY);
+
+        // If a leader exists but hasn't written heartbeat yet, give it a grace window.
+        // (This happens right after leader election / when browser throttles timers.)
+        if (currentLeader && startedAt) {
+          const elapsed = Date.now() - parseInt(startedAt, 10);
+          if (elapsed < HEARTBEAT_TIMEOUT) {
+            if (this.debug) console.log(`[Broadcast] Leader start detected without heartbeat (${elapsed}ms), waiting`);
+            return;
+          }
+        }
+
         if (this.debug) console.log(`[Broadcast] No heartbeat found, re-electing`);
+        localStorage.removeItem(LEADER_KEY);
+        localStorage.removeItem(LEADER_STARTED_KEY);
         this.electLeader();
         return;
       }
@@ -218,6 +238,7 @@ export class BroadcastManager {
         if (this.debug) console.log(`[Broadcast] Heartbeat stale (${elapsed}ms), re-electing`);
         // Clear stale keys so other followers don't also think a leader exists
         localStorage.removeItem(LEADER_KEY);
+        localStorage.removeItem(LEADER_STARTED_KEY);
         localStorage.removeItem(`${LEADER_KEY}-heartbeat`);
         this.electLeader();
       }
@@ -378,6 +399,7 @@ export class BroadcastManager {
       // Removing the key fires a 'storage' event on all surviving follower tabs,
       // which immediately triggers their re-election.
       localStorage.removeItem(LEADER_KEY);
+      localStorage.removeItem(LEADER_STARTED_KEY);
       localStorage.removeItem(`${LEADER_KEY}-heartbeat`);
       if (this.debug) console.log(`[Broadcast] Leader cleanup (${this.tabId})`);
     }
