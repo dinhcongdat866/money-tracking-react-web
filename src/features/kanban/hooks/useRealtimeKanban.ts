@@ -28,6 +28,7 @@ import {
   type TransactionDeletedEvent,
 } from '@/lib/websocket/types';
 import type { KanbanPaginatedResponse, KanbanFilters } from '../types';
+import type { TransactionItem } from '@/features/transactions/types';
 
 /**
  * Hook to sync real-time updates with Kanban board
@@ -157,6 +158,27 @@ export function useRealtimeKanban(filters: KanbanFilters) {
   // HELPER FUNCTIONS
   // ============================================================================
 
+  const applyAggregateDelta = (
+    page: KanbanPaginatedResponse,
+    tx: Pick<TransactionItem, 'type' | 'amount'>,
+    direction: 'add' | 'remove'
+  ): KanbanPaginatedResponse => {
+    const sign = direction === 'add' ? 1 : -1;
+    const deltaIncome = tx.type === 'income' ? sign * tx.amount : 0;
+    const deltaExpenses = tx.type === 'expense' ? sign * tx.amount : 0;
+
+    const nextTotalIncome = (page.totalIncome ?? 0) + deltaIncome;
+    const nextTotalExpenses = (page.totalExpenses ?? 0) + deltaExpenses;
+    const nextCategoryTotal = nextTotalIncome - nextTotalExpenses;
+
+    return {
+      ...page,
+      totalIncome: nextTotalIncome,
+      totalExpenses: nextTotalExpenses,
+      categoryTotal: nextCategoryTotal,
+    };
+  };
+
   /**
    * Check if event is outdated based on version/timestamp
    * Returns true if should DISCARD (outdated), false if should APPLY
@@ -263,15 +285,18 @@ export function useRealtimeKanban(filters: KanbanFilters) {
 
         return {
           ...old,
-          pages: old.pages.map(page => ({
-            ...page,
-            items: page.items.filter(t => t.id !== transaction.id),
-            total: page.total - 1,
-            pagination: {
-              ...page.pagination,
-              totalAvailable: page.pagination.totalAvailable - 1,
-            },
-          })),
+          pages: old.pages.map(page => {
+            const nextPage = applyAggregateDelta(page, transaction, 'remove');
+            return {
+              ...nextPage,
+              items: nextPage.items.filter(t => t.id !== transaction.id),
+              total: nextPage.total - 1,
+              pagination: {
+                ...nextPage.pagination,
+                totalAvailable: nextPage.pagination.totalAvailable - 1,
+              },
+            };
+          }),
         };
       }
     );
@@ -290,13 +315,14 @@ export function useRealtimeKanban(filters: KanbanFilters) {
           ...old,
           pages: old.pages.map((page, index) => {
             if (index === 0) {
+              const nextPage = applyAggregateDelta(page, transaction, 'add');
               return {
-                ...page,
-                items: [transaction, ...page.items],
-                total: page.total + 1,
+                ...nextPage,
+                items: [transaction, ...nextPage.items],
+                total: nextPage.total + 1,
                 pagination: {
-                  ...page.pagination,
-                  totalAvailable: page.pagination.totalAvailable + 1,
+                  ...nextPage.pagination,
+                  totalAvailable: nextPage.pagination.totalAvailable + 1,
                 },
               };
             }
@@ -359,13 +385,14 @@ export function useRealtimeKanban(filters: KanbanFilters) {
           ...old,
           pages: old.pages.map((page, index) => {
             if (index === 0) {
+              const nextPage = applyAggregateDelta(page, transaction, 'add');
               return {
-                ...page,
-                items: [transaction, ...page.items],
-                total: page.total + 1,
+                ...nextPage,
+                items: [transaction, ...nextPage.items],
+                total: nextPage.total + 1,
                 pagination: {
-                  ...page.pagination,
-                  totalAvailable: page.pagination.totalAvailable + 1,
+                  ...nextPage.pagination,
+                  totalAvailable: nextPage.pagination.totalAvailable + 1,
                 },
               };
             }
@@ -499,6 +526,10 @@ export function useRealtimeKanban(filters: KanbanFilters) {
         };
       }
     );
+
+    // We don't have `amount/type` in delete events, so we can't adjust aggregates safely.
+    // Refetch to keep `categoryTotal/totalIncome/totalExpenses` correct.
+    queryClient.invalidateQueries({ queryKey: categoryKey });
 
     // Cleanup version tracking for deleted transaction
     transactionVersions.current.delete(transactionId);

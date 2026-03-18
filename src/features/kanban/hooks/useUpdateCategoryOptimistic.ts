@@ -39,6 +39,27 @@ export function useUpdateCategoryOptimistic() {
   const { send, isConnected } = useWebSocket();
   const broadcastManager = getBroadcastManager();
 
+  const applyAggregateDelta = (
+    page: KanbanPaginatedResponse,
+    tx: Pick<TransactionItem, 'type' | 'amount'>,
+    direction: 'add' | 'remove'
+  ): KanbanPaginatedResponse => {
+    const sign = direction === 'add' ? 1 : -1;
+    const deltaIncome = tx.type === 'income' ? sign * tx.amount : 0;
+    const deltaExpenses = tx.type === 'expense' ? sign * tx.amount : 0;
+
+    const nextTotalIncome = (page.totalIncome ?? 0) + deltaIncome;
+    const nextTotalExpenses = (page.totalExpenses ?? 0) + deltaExpenses;
+    const nextCategoryTotal = nextTotalIncome - nextTotalExpenses;
+
+    return {
+      ...page,
+      totalIncome: nextTotalIncome,
+      totalExpenses: nextTotalExpenses,
+      categoryTotal: nextCategoryTotal,
+    };
+  };
+
   return useMutation({
     mutationFn: async ({ transactionId, newCategory, transaction }: UpdateCategoryVariables) => {
       return await updateTransaction(transactionId, {
@@ -109,15 +130,18 @@ export function useUpdateCategoryOptimistic() {
           
           return {
             ...old,
-            pages: old.pages.map(page => ({
-              ...page,
-              items: page.items.filter(t => t.id !== transactionId),
-              total: page.total - 1,
-              pagination: {
-                ...page.pagination,
-                totalAvailable: page.pagination.totalAvailable - 1,
-              },
-            })),
+            pages: old.pages.map(page => {
+              const nextPage = applyAggregateDelta(page, transaction, 'remove');
+              return {
+                ...nextPage,
+                items: nextPage.items.filter(t => t.id !== transactionId),
+                total: nextPage.total - 1,
+                pagination: {
+                  ...nextPage.pagination,
+                  totalAvailable: nextPage.pagination.totalAvailable - 1,
+                },
+              };
+            }),
           };
         }
       );
@@ -159,13 +183,14 @@ export function useUpdateCategoryOptimistic() {
             pages: old.pages.map((page, index) => {
               // Add to first page only
               if (index === 0) {
+                const nextPage = applyAggregateDelta(page, updatedTransaction, 'add');
                 return {
-                  ...page,
-                  items: [updatedTransaction, ...page.items],
-                  total: page.total + 1,
+                  ...nextPage,
+                  items: [updatedTransaction, ...nextPage.items],
+                  total: nextPage.total + 1,
                   pagination: {
-                    ...page.pagination,
-                    totalAvailable: page.pagination.totalAvailable + 1,
+                    ...nextPage.pagination,
+                    totalAvailable: nextPage.pagination.totalAvailable + 1,
                   },
                 };
               }
