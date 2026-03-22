@@ -4,6 +4,7 @@
  * API client for cursor-based infinite scroll with 100 items per page.
  */
 
+import { apiRequest } from '@/lib/api-client';
 import { transactionKeys } from '@/lib/query-keys';
 import type { KanbanPaginatedResponse, KanbanPageParam } from '../types';
 
@@ -35,13 +36,9 @@ export async function getKanbanColumnData(
     searchParams.append('search', params.search);
   }
 
-  const response = await fetch(`/api/transactions?${searchParams.toString()}`);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch kanban data: ${response.statusText}`);
-  }
-
-  return response.json();
+  return apiRequest<KanbanPaginatedResponse>(
+    `/api/transactions?${searchParams.toString()}`,
+  );
 }
 
 /**

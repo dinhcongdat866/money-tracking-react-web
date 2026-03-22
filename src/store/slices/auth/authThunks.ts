@@ -1,4 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { apiRequest } from '@/lib/api-client';
+import { ApiError } from '@/lib/api-errors';
 import type { User } from './authSlice';
 
 /**
@@ -13,22 +15,15 @@ export const loginThunk = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const data = await apiRequest<{ user: User }>('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(credentials),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return rejectWithValue(data.error || 'Login failed');
-      }
-
-      return data.user as User;
+      return data.user;
     } catch (error) {
+      if (error instanceof ApiError) {
+        return rejectWithValue(error.message);
+      }
       return rejectWithValue(
         error instanceof Error ? error.message : 'Network error'
       );
@@ -44,15 +39,11 @@ export const logoutThunk = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        return rejectWithValue(data.error || 'Logout failed');
-      }
+      await apiRequest('/api/auth/logout', { method: 'POST' });
     } catch (error) {
+      if (error instanceof ApiError) {
+        return rejectWithValue(error.message);
+      }
       return rejectWithValue(
         error instanceof Error ? error.message : 'Network error'
       );

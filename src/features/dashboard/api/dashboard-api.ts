@@ -1,26 +1,20 @@
 import { Balance, CategoryExpense, Summary, TimeRange } from "../types";
 import type { PaginatedTransactionsResponse } from "@/features/transactions/api/transactions-api";
+import { apiRequest } from "@/lib/api-client";
 
 export async function getBalance(): Promise<Balance> {
-    const res = await fetch("/api/balance", { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch balance");
-    return res.json();
+    return apiRequest<Balance>("/api/balance", { cache: "no-store" });
 }
 
 export async function getMostSpentExpenses(timeRange: TimeRange, limit: number): Promise<CategoryExpense[]> {
-    const res = await fetch(`/api/expenses/top?timeRange=${timeRange}&limit=${limit}`, { cache: "force-cache" });
-    if (!res.ok) {
-        throw new Error("Failed to fetch top expenses");
-    }
-    return res.json();
+    return apiRequest<CategoryExpense[]>(
+        `/api/expenses/top?timeRange=${timeRange}&limit=${limit}`,
+        { cache: "force-cache" },
+    );
 }
 
 export async function getSummary(timeRange: TimeRange): Promise<Summary> {
-    const res = await fetch(`/api/summary?timeRange=${timeRange}`, { cache: "force-cache" });
-    if (!res.ok) {
-        throw new Error("Failed to fetch summary");
-    }
-    return res.json();
+    return apiRequest<Summary>(`/api/summary?timeRange=${timeRange}`, { cache: "force-cache" });
 }
 
 export async function getRecentTransactions(
@@ -31,9 +25,7 @@ export async function getRecentTransactions(
         page: String(page),
         limit: String(limit),
     });
-    const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
-    if (!res.ok) {
-        throw new Error("Failed to fetch recent transactions");
-    }
-    return res.json();
+    return apiRequest<PaginatedTransactionsResponse>(`/api/transactions?${params.toString()}`, {
+        cache: "no-store",
+    });
 }
