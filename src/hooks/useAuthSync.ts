@@ -11,7 +11,7 @@ import { setUser, clearUser } from '@/store/slices/auth/authSlice';
 import { selectUser } from '@/store/slices/auth/authSelectors';
 
 interface UseAuthSyncProps {
-  serverUser: { id?: string; email?: string } | null;
+  serverUser: { id: string; email: string } | null;
 }
 
 export function useAuthSync({ serverUser }: UseAuthSyncProps) {
@@ -20,9 +20,9 @@ export function useAuthSync({ serverUser }: UseAuthSyncProps) {
 
   useEffect(() => {
     // Server has user → Sync to Redux (if different or missing)
-    if (serverUser?.email && (!reduxUser || reduxUser.email !== serverUser.email)) {
+    if (serverUser && (!reduxUser || reduxUser.id !== serverUser.id)) {
       dispatch(setUser({
-        id: serverUser.id || '1',
+        id: serverUser.id,
         email: serverUser.email,
         name: serverUser.email.split('@')[0],
       }));

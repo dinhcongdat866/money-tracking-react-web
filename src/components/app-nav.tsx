@@ -18,16 +18,19 @@ const links = [
 
 type AppNavProps = {
   userEmail?: string | null;
+  userId?: string | null;
 };
 
-export function AppNav({ userEmail: serverUserEmail }: AppNavProps) {
+export function AppNav({ userEmail: serverUserEmail, userId: serverUserId }: AppNavProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
   
   // Sync server session (source of truth) to Redux on mount
-  useAuthSync({ 
-    serverUser: serverUserEmail ? { email: serverUserEmail } : null 
+  useAuthSync({
+    serverUser: serverUserEmail && serverUserId
+      ? { id: serverUserId, email: serverUserEmail }
+      : null,
   });
   
   const user = useAppSelector(selectUser);
