@@ -15,6 +15,7 @@ loadDotenv({ path: ".env" });
 import { PrismaClient, TransactionType } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { faker } from "@faker-js/faker";
+import bcrypt from "bcryptjs";
 
 // ---------------------------------------------------------------------------
 // Category config — must match src/features/transactions/data/categories.ts
@@ -94,8 +95,7 @@ async function seed() {
   const seedUser = await prisma.user.create({
     data: {
       email: "demo@example.com",
-      // bcrypt hash of "password123" at cost 12 — pre-computed for seed speed
-      passwordHash: "$2b$12$LQv3c1yqBwEHB6rKd5jfOe.9bGiBl5BbeBn0i4a9mfJ2U.r4z5ROm",
+      passwordHash: await bcrypt.hash("password123", 12),
       displayName: "Demo User",
     },
   });
