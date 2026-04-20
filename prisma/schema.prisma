@@ -15,8 +15,20 @@ enum TransactionType {
   expense
 }
 
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  displayName  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  transactions Transaction[]
+}
+
 model Transaction {
   id           String          @id @default(uuid())
+  userId       String
   amount       Float
   type         TransactionType
   categoryId   String
@@ -28,8 +40,10 @@ model Transaction {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
-  @@index([date])
-  @@index([type])
-  @@index([categoryId])
-  @@index([date, type])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, categoryId])
+  @@index([userId, date, type])
 }
