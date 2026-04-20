@@ -16,6 +16,11 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get(cookieName)?.value;
   const pathname = req.nextUrl.pathname;
 
+  // Public pages — accessible without auth
+  if (pathname === "/signup") {
+    return NextResponse.next();
+  }
+
   // Visiting /login while already authenticated → redirect to returnUrl or dashboard
   if (pathname === "/login") {
     if (token) {

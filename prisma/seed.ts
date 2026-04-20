@@ -86,8 +86,20 @@ async function seed() {
   console.log("🌱 Starting database seed...\n");
 
   // Clear existing data
-  const deleted = await prisma.transaction.deleteMany({});
-  console.log(`🗑️  Cleared ${deleted.count} existing transactions`);
+  await prisma.transaction.deleteMany({});
+  await prisma.user.deleteMany({});
+  console.log("🗑️  Cleared existing transactions and users");
+
+  // Create a seed user that owns all generated transactions
+  const seedUser = await prisma.user.create({
+    data: {
+      email: "demo@example.com",
+      // bcrypt hash of "password123" at cost 12 — pre-computed for seed speed
+      passwordHash: "$2b$12$LQv3c1yqBwEHB6rKd5jfOe.9bGiBl5BbeBn0i4a9mfJ2U.r4z5ROm",
+      displayName: "Demo User",
+    },
+  });
+  console.log(`👤 Created seed user: ${seedUser.email}`);
 
   // Generate transactions spanning the last 6 months
   // Allow overriding the default via SEED_TRANSACTION_COUNT env for heavy testing
@@ -106,6 +118,7 @@ async function seed() {
     const note = generateNote(category.id, Math.random() < 0.6);
 
     transactions.push({
+      userId: seedUser.id,
       amount,
       type: type as TransactionType,
       categoryId: category.id,

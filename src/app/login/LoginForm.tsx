@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,9 +96,11 @@ export function LoginForm({ initialReturnUrl = null }: LoginFormProps) {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
 
-            <p className="mt-2 text-xs text-muted-foreground">
-              Demo account: <span className="font-mono">demo@example.com</span>{" "}
-              / <span className="font-mono">password123</span>
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link href="/signup" className="underline underline-offset-4 hover:text-foreground">
+                Sign up
+              </Link>
             </p>
           </form>
         </CardContent>
