@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectUser, selectUserDisplayName } from "@/store/slices/auth/authSelectors";
+import { selectUser } from "@/store/slices/auth/authSelectors";
 import { logoutThunk } from "@/store/slices/auth/authThunks";
 import { useAuthSync } from "@/hooks/useAuthSync";
+import { useAccountProfile } from "@/features/account/hooks/use-profile";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -34,7 +35,8 @@ export function AppNav({ userEmail: serverUserEmail, userId: serverUserId }: App
   });
   
   const user = useAppSelector(selectUser);
-  const displayName = useAppSelector(selectUserDisplayName);
+  const { data: profile } = useAccountProfile({ enabled: !!user });
+  const displayName = profile?.displayName ?? user?.email ?? "Guest";
   
   const isLoginPage = pathname === "/login";
 

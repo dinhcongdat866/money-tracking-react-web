@@ -16,12 +16,14 @@ enum TransactionType {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  passwordHash String
-  displayName  String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  email           String        @unique
+  passwordHash    String
+  displayName     String?
+  timezone        String        @default("Europe/London")
+  marketingOptIn  Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   transactions Transaction[]
 }
