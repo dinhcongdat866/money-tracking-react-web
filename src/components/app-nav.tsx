@@ -13,6 +13,7 @@ const links = [
   { href: "/transactions", label: "Transactions" },
   { href: "/transactions/kanban", label: "Kanban" },
   { href: "/reports/monthly", label: "Monthly Reports" },
+  { href: "/account", label: "Account" },
 ];
 
 type AppNavProps = {

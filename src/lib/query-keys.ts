@@ -85,6 +85,15 @@ export const transactionKeys = {
 } as const;
 
 // ============================================================================
+// ACCOUNT (profile, settings)
+// ============================================================================
+
+export const accountKeys = {
+  all: ["account"] as const,
+  profile: () => [...accountKeys.all, "profile"] as const,
+} as const;
+
+// ============================================================================
 // FINANCIAL METRICS (Summary, Balance)
 // ============================================================================
 
@@ -186,6 +195,13 @@ export function invalidateAllAnalytics(queryClient: QueryClient) {
 }
 
 /**
+ * Invalidate account-related queries (profile, settings)
+ */
+export function invalidateAllAccount(queryClient: QueryClient) {
+  return queryClient.invalidateQueries({ queryKey: accountKeys.all });
+}
+
+/**
  * Invalidate all queries (useful for logout, etc.)
  */
 export function invalidateAll(queryClient: QueryClient) {
@@ -193,6 +209,7 @@ export function invalidateAll(queryClient: QueryClient) {
     invalidateAllTransactions(queryClient),
     invalidateAllFinancial(queryClient),
     invalidateAllAnalytics(queryClient),
+    invalidateAllAccount(queryClient),
   ]);
 }
 
