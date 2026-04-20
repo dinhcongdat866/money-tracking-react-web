@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/api-auth";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
+  const { searchParams } = new URL(req.url);
   const timeRange = searchParams.get("timeRange") || "week";
 
   const now = new Date();
@@ -12,8 +16,7 @@ export async function GET(request: NextRequest) {
   let previousEnd: Date;
 
   if (timeRange === "week") {
-    // Current week: Mon–today
-    const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Mon = 0
+    const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
     currentStart = new Date(now);
     currentStart.setDate(now.getDate() - dayOfWeek);
     currentStart.setHours(0, 0, 0, 0);
@@ -24,7 +27,6 @@ export async function GET(request: NextRequest) {
     previousStart.setDate(previousEnd.getDate() - 6);
     previousStart.setHours(0, 0, 0, 0);
   } else {
-    // Current month
     currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
     previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     previousEnd = new Date(now.getFullYear(), now.getMonth(), 0);
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest) {
   const [currentRows, previousRows] = await Promise.all([
     prisma.transaction.findMany({
       where: {
+        userId,
         date: { gte: toDateStr(currentStart), lte: toDateStr(now) },
         type: "expense",
       },
@@ -42,6 +45,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.transaction.findMany({
       where: {
+        userId,
         date: { gte: toDateStr(previousStart), lte: toDateStr(previousEnd) },
         type: "expense",
       },

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { MonthlySummary } from "@/features/transactions/types";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
   const { searchParams } = new URL(req.url);
   const month = searchParams.get("month");
 
@@ -14,7 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   const rows = await prisma.transaction.findMany({
-    where: { date: { startsWith: month } },
+    where: { userId, date: { startsWith: month } },
     select: { type: true, amount: true },
   });
 

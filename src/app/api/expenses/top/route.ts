@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { TimeRange } from "@/features/dashboard/types";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
   const { searchParams } = new URL(req.url);
   const timeRange = searchParams.get("timeRange") as TimeRange;
   const limit = parseInt(searchParams.get("limit") ?? "5", 10);
@@ -15,30 +20,26 @@ export async function GET(req: NextRequest) {
     const monday = new Date(now);
     monday.setDate(now.getDate() - dayOfWeek);
     monday.setHours(0, 0, 0, 0);
-    const dateStr = monday.toISOString().split("T")[0];
-    startDate = dateStr ?? "";
+    startDate = monday.toISOString().split("T")[0] ?? "";
   } else {
     startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   }
 
-  const todayStr = now.toISOString().split("T")[0];
-  const today = todayStr ?? "";
+  const todayStr = now.toISOString().split("T")[0] ?? "";
 
   const rows = await prisma.transaction.groupBy({
     by: ["categoryId", "categoryName"],
     where: {
+      userId,
       type: "expense",
-      date: { gte: startDate, lte: today },
+      date: { gte: startDate, lte: todayStr },
     },
     _sum: { amount: true },
     orderBy: { _sum: { amount: "desc" } },
     take: limit,
   });
 
-  const totalExpense = rows.reduce(
-    (sum, r) => sum + (r._sum.amount ?? 0),
-    0,
-  );
+  const totalExpense = rows.reduce((sum, r) => sum + (r._sum.amount ?? 0), 0);
 
   const result = rows.map((r) => ({
     categoryId: r.categoryId,

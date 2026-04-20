@@ -2,27 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { toTransactionItem } from "@/lib/db-helpers";
 import { TransactionType, Prisma } from "@prisma/client";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const month = searchParams.get("month") ?? undefined;
 
-  // Kanban mode: cursor-based by category (same data as list, different shape)
+  // Kanban mode: cursor-based by category
   if (category) {
     const cursor = searchParams.get("cursor");
     const limit = Math.min(
       Math.max(parseInt(searchParams.get("limit") ?? "100", 10), 1),
       200,
     );
-    const typeParam = searchParams.get("type") as
-      | "income"
-      | "expense"
-      | "all"
-      | null;
+    const typeParam = searchParams.get("type") as "income" | "expense" | "all" | null;
     const search = searchParams.get("search");
 
-    const where: Prisma.TransactionWhereInput = {};
+    const where: Prisma.TransactionWhereInput = { userId };
     if (month) where.date = { startsWith: month };
     where.categoryId = category;
     if (typeParam && typeParam !== "all") {
@@ -55,9 +56,7 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: [{ date: "desc" }, { id: "asc" }],
       take: limit + 1,
-      ...(cursor
-        ? { cursor: { id: cursor }, skip: 1 }
-        : {}),
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
     const hasMore = items.length > limit;
@@ -80,10 +79,11 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // List mode: page/limit for Transactions page
+  // List mode: page/limit
   const page = Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1);
   const limit = Math.max(parseInt(searchParams.get("limit") ?? "20", 10), 1);
-  const where = month ? { date: { startsWith: month } } : {};
+  const where: Prisma.TransactionWhereInput = { userId };
+  if (month) where.date = { startsWith: month };
 
   const [total, rows] = await Promise.all([
     prisma.transaction.count({ where }),
@@ -105,6 +105,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
   try {
     const body = await req.json();
 
@@ -116,6 +120,7 @@ export async function POST(req: NextRequest) {
 
     const tx = await prisma.transaction.create({
       data: {
+        userId,
         amount: body.amount,
         type: body.type as TransactionType,
         categoryId: body.categoryId,

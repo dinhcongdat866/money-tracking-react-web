@@ -2,26 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { toTransactionItem } from "@/lib/db-helpers";
 import { TransactionType } from "@prisma/client";
+import { requireUser } from "@/lib/api-auth";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_req: Request, { params }: RouteParams) {
-  const { id } = await params;
+export async function GET(req: NextRequest, { params }: RouteParams) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
 
-  const tx = await prisma.transaction.findUnique({ where: { id } });
+  const { id } = await params;
+  const tx = await prisma.transaction.findFirst({ where: { id, userId } });
   if (!tx) return new NextResponse("Not found", { status: 404 });
 
   return NextResponse.json(toTransactionItem(tx));
 }
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
   try {
     const { id } = await params;
     const body = await req.json();
 
-    const existing = await prisma.transaction.findUnique({ where: { id } });
+    const existing = await prisma.transaction.findFirst({ where: { id, userId } });
     if (!existing) return new NextResponse("Not found", { status: 404 });
 
     const updated = await prisma.transaction.update({
@@ -47,11 +55,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const { userId } = auth;
+
   try {
     const { id } = await params;
 
-    const existing = await prisma.transaction.findUnique({ where: { id } });
+    const existing = await prisma.transaction.findFirst({ where: { id, userId } });
     if (!existing) return new NextResponse("Not found", { status: 404 });
 
     await prisma.transaction.delete({ where: { id } });
